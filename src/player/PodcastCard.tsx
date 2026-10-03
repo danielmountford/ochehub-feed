@@ -40,7 +40,7 @@ export function PodcastCard({ item }: { item: PodcastItem }) {
         <div className={cx('pslide-meta', direction > 0 ? 'from-right' : 'from-left')} key={item.id}>
           <div className="pslide-show">
             <span>{source?.short}</span>
-            <FollowButton compact id={item.sourceId} type="source" />
+            <FollowButton id={item.sourceId} type="source" />
           </div>
           <h2>{item.title}</h2>
           <p>
@@ -94,14 +94,13 @@ export function PodcastCard({ item }: { item: PodcastItem }) {
           <button aria-label={`Playback speed ${rate}×`} className="rate-btn" onClick={() => player.cycleRate()} type="button">
             {rate}×
           </button>
-          <SaveButton className="action" item={item} />
-          <button aria-label="Share" className="action" onClick={() => shareItem(item)} type="button">
-            <ShareIcon size={20} />
+          <SaveButton className="icon-btn" item={item} />
+          <button aria-label="Share" className="icon-btn" onClick={() => shareItem(item)} type="button">
+            <ShareIcon size={22} />
           </button>
           <button aria-expanded={listOpen} className="episodes-btn" onClick={() => setListOpen(true)} type="button">
-            <ListIcon size={18} />
-            Episodes
-            <b>{queue.length}</b>
+            <ListIcon size={20} />
+            {queue.length} episodes
           </button>
         </div>
       </div>

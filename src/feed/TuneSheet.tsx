@@ -3,14 +3,13 @@ import { accountFollows, competitions, players, sources } from '../data/catalogu
 import type { ItemKind } from '../data/types';
 import { ALL_KINDS, countFor, countForYou, defaultPrefs, kindLabels, type Prefs, prefsStore, type Strength } from '../lib/feed';
 import { cx, KindGlyph, PlayerDisc, SourceAvatar } from '../ui/bits';
-import { CheckIcon } from '../ui/icons';
 import { toast } from './actions';
 import { Sheet } from './Sheet';
 
-const strengths: { id: Strength; label: string; body: string }[] = [
-  { id: 'everything', label: 'Everything', body: 'Latest first from every source. Follows don’t change the order.' },
-  { id: 'boost', label: 'Follows first', body: 'Everything, with your players, competitions and sources moved up.' },
-  { id: 'only', label: 'Only follows', body: 'Nothing unless it matches someone or something you follow.' },
+const strengths: { id: Strength; label: string }[] = [
+  { id: 'everything', label: 'Everything' },
+  { id: 'boost', label: 'Follows first' },
+  { id: 'only', label: 'Only follows' },
 ];
 
 const sourceKindLabel = { videoChannel: 'Video channel', podcastShow: 'Podcast', newsPublisher: 'News' } as const;
@@ -45,29 +44,27 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
     prefsStore.set(draft);
     onClose();
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    toast(`Feed tuned · ${count} items`);
+    toast(`Tuned · ${count} items`);
   }
 
   return (
     <Sheet
       className="tune"
-      eyebrow="Personalise"
       footer={
         <>
-          <button className="pill-btn is-ghost" onClick={() => setDraft(defaultPrefs)} type="button">
+          <button className="text-btn" onClick={() => setDraft(defaultPrefs)} type="button">
             Reset
           </button>
           <button className="pill-btn is-wide" disabled={!count} onClick={apply} type="button">
-            {count ? `${dirty ? 'Apply' : 'Done'} · ${count} items` : 'Nothing matches'}
+            {count ? `${dirty ? 'Apply' : 'Done'} · ${count}` : 'Nothing matches'}
           </button>
         </>
       }
       onClose={onClose}
       open={open}
-      title="Tune your feed"
+      title="Tune"
     >
       <section className="tune-block">
-        <h3 className="mini-head">How much should follows matter?</h3>
         <div className="segmented" role="radiogroup">
           {strengths.map((option) => (
             <button
@@ -87,14 +84,12 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
             style={{ '--index': strengths.findIndex((option) => option.id === draft.strength) } as CSSProperties}
           />
         </div>
-        <p className="tune-help">{strengths.find((option) => option.id === draft.strength)?.body}</p>
       </section>
 
       <section className="tune-block">
         <h3 className="mini-head">
-          Players <span>{draft.players.length} followed</span>
+          Players <span>from your OcheHub follows</span>
         </h3>
-        <p className="tune-help">Synced with the players you follow in OcheHub. Changes here update your account follows.</p>
         <div className="pick-grid">
           {orderedPlayers.map((player) => {
             const on = draft.players.includes(player.id);
@@ -107,16 +102,9 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
                 style={{ '--hue': player.hue } as CSSProperties}
                 type="button"
               >
-                <PlayerDisc playerId={player.id} size={32} />
-                <span className="pick-text">
-                  <strong>{player.last}</strong>
-                  <span>
-                    {player.first} · {countFor('player', player.id)} in feed
-                  </span>
-                </span>
-                <span className="pick-check">
-                  <CheckIcon size={14} />
-                </span>
+                <PlayerDisc playerId={player.id} size={28} />
+                <strong>{player.last}</strong>
+                <span className="pick-count">{countFor('player', player.id)}</span>
               </button>
             );
           })}
@@ -124,9 +112,7 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
       </section>
 
       <section className="tune-block">
-        <h3 className="mini-head">
-          Competitions <span>{draft.competitions.length} followed</span>
-        </h3>
+        <h3 className="mini-head">Competitions</h3>
         <div className="chip-wrap">
           {competitions.map((competition) => {
             const on = draft.competitions.includes(competition.id);
@@ -138,7 +124,6 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
                 onClick={() => setDraft({ ...draft, competitions: toggle(draft.competitions, competition.id) })}
                 type="button"
               >
-                {on ? <CheckIcon size={14} /> : null}
                 {competition.name}
               </button>
             );
@@ -147,9 +132,7 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
       </section>
 
       <section className="tune-block">
-        <h3 className="mini-head">
-          Sources <span>{draft.sources.length} followed</span>
-        </h3>
+        <h3 className="mini-head">Sources</h3>
         <ul className="source-list">
           {sources.map((source) => {
             const on = draft.sources.includes(source.id);
@@ -161,7 +144,7 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
                   role="switch"
                   type="button"
                 >
-                  <SourceAvatar size={36} sourceId={source.id} />
+                  <SourceAvatar size={32} sourceId={source.id} />
                   <span className="source-list-text">
                     <strong>{source.short}</strong>
                     <span>{sourceKindLabel[source.kind]}</span>
@@ -177,7 +160,7 @@ export function TuneSheet({ open, onClose }: { open: boolean; onClose: () => voi
       </section>
 
       <section className="tune-block">
-        <h3 className="mini-head">In your mix</h3>
+        <h3 className="mini-head">Show me</h3>
         <div className="mix-grid">
           {ALL_KINDS.map((kind: ItemKind) => {
             const on = draft.kinds.includes(kind);
