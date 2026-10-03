@@ -1,14 +1,8 @@
-# Publishes both feed styles to GitHub Pages:
+# Publishes the feed to GitHub Pages from dist/ on main.
 #
-#   /           style 1, from dist/ on main
-#   /style-2/   style 2, from dist/ on the style-2 branch
-#
-# dist/ is committed on each branch, so nothing is installed or built here: run
+# dist/ is committed, so nothing is installed or built here: run
 # `npm run build` before you push if you have changed anything under src/ or
 # public/.
-#
-# It runs on every push to main. After pushing only to style-2, start it by
-# hand: Actions > Deploy to GitHub Pages > Run workflow (branch: main).
 name: Deploy to GitHub Pages
 
 on:
@@ -32,26 +26,14 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout main (style 1)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: main
-      - name: Checkout style-2
-        uses: actions/checkout@v4
-        with:
-          ref: style-2
-          path: _style-2
-      - name: Assemble site
-        run: |
-          mkdir -p _site/style-2
-          cp -r dist/. _site/
-          cp -r _style-2/dist/. _site/style-2/
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v5
