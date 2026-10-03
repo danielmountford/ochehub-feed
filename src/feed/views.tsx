@@ -26,7 +26,7 @@ export function ForYouView({ prefs, focus, goTo, onTune }: { prefs: Prefs; focus
   const modules = useMemo(() => composeForYou(prefs, focus), [prefs, focus]);
 
   return (
-    <>
+    <div className="tab-body" key={focus ? `${focus.type}-${focus.id}` : 'all'}>
       {focus ? (
         <div className="focus">
           <button onClick={() => emitFocus(null)} type="button">
@@ -44,7 +44,7 @@ export function ForYouView({ prefs, focus, goTo, onTune }: { prefs: Prefs; focus
         />
       )}
       {modules.length ? <p className="endcap">You’re all caught up</p> : null}
-    </>
+    </div>
   );
 }
 

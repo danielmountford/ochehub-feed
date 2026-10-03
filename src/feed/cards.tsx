@@ -30,16 +30,18 @@ function useNowPlaying(id: string) {
 }
 
 /**
- * The only personalisation cue on a card: a green dot when the item is here
- * because of a player or competition the viewer follows.
+ * The one personalisation cue on a card: "Following Luke Littler" under items
+ * that are placed where they are because of a player or competition the viewer
+ * follows. Everything else stays untagged, and so does the whole feed when
+ * follows are switched off in Tune.
  */
-function FollowDot({ item }: { item: FeedItem }) {
+export function FollowTag({ item }: { item: FeedItem }) {
   const prefs = useStore(prefsStore);
   const reason = reasonFor(item, prefs);
   if (!reason || reason.type === 'source' || prefs.strength === 'everything') {
     return null;
   }
-  return <i aria-label={`Because you follow ${reason.label}`} className="follow-dot" role="img" title={`Because you follow ${reason.label}`} />;
+  return <span className="follow-tag">Following {reason.label}</span>;
 }
 
 function Playing({ status }: { status: string | null }) {
@@ -61,7 +63,6 @@ function Meta({ item, extra }: { item: FeedItem; extra?: string }) {
   return (
     <span className="meta">
       <Playing status={status} />
-      {status ? null : <FollowDot item={item} />}
       <span>
         {source?.short}
         {extra ? ` · ${extra}` : ''}
@@ -70,34 +71,59 @@ function Meta({ item, extra }: { item: FeedItem; extra?: string }) {
   );
 }
 
-/* ------------------------------------------------------------------ hero */
+/* ------------------------------------------------------------- spotlight */
 
-export function HeroSlide({ item, active, eager }: { item: VideoItem | PodcastItem; active: boolean; eager?: boolean }) {
+/** A card in the slider at the top of For you. */
+export function SpotlightCard({
+  item,
+  position,
+  total,
+  eager,
+}: {
+  item: VideoItem | PodcastItem;
+  position: number;
+  total: number;
+  eager?: boolean;
+}) {
   const open = useOpen(item);
+  const source = sourceById.get(item.sourceId);
   const isPodcast = item.kind === 'podcast';
-  const title = isPodcast ? item.title : item.headline;
+  const headline = isPodcast ? item.title : item.headline;
+  const context = isPodcast ? durationLabel(item.durationSeconds) : item.context;
 
   return (
-    <article className={cx('hero-slide', `is-${item.kind}`, active && 'is-active')}>
-      <div className="hero-media">
+    <article className={cx('spot', `spot-${item.kind}`)}>
+      <button aria-label={`${isPodcast ? 'Listen' : 'Watch'}: ${item.title}`} className="spot-hit" onClick={open} type="button" />
+      <div className="spot-media">
         {isPodcast ? (
           <>
-            <Artwork className="hero-wash" sourceId={item.sourceId} />
-            <Artwork className="hero-art" eager={eager} sourceId={item.sourceId} />
+            <Artwork className="spot-art-wash" sourceId={item.sourceId} />
+            <Artwork className="spot-art" eager={eager} sourceId={item.sourceId} />
           </>
         ) : (
           <Thumb eager={eager} item={item} quality="high" />
         )}
       </div>
-      <div className="hero-fade" />
-      <button aria-label={`${isPodcast ? 'Listen' : 'Watch'}: ${item.title}`} className="hero-hit" onClick={open} type="button" />
-      <div className="hero-body">
-        <Meta extra={isPodcast ? durationLabel(item.durationSeconds) : undefined} item={item} />
-        <h2 className={cx('hero-title', title.length > 48 && 'is-long')}>{title}</h2>
-      </div>
-      <span aria-hidden="true" className="hero-play">
-        <PlayIcon size={26} />
+      <div className="spot-shade" />
+
+      <span className="spot-count">
+        {String(position + 1).padStart(2, '0')}
+        <i>/{String(total).padStart(2, '0')}</i>
       </span>
+
+      <div className="spot-body">
+        <h2 className={cx('spot-title', headline.length > 60 && 'is-long')}>{headline}</h2>
+        {context ? <p className="spot-context">{context}</p> : null}
+        <FollowTag item={item} />
+        <div className="spot-foot">
+          <SourceAvatar size={30} sourceId={item.sourceId} />
+          <span className="spot-source">{source?.name}</span>
+          <span aria-hidden="true" className="spot-play">
+            <PlayIcon size={26} />
+            {isPodcast ? 'Listen' : 'Watch'}
+          </span>
+        </div>
+      </div>
     </article>
   );
 }
@@ -109,7 +135,10 @@ export function ShortTile({ item }: { item: VideoItem }) {
   return (
     <button className="short-tile" onClick={open} type="button">
       <Thumb item={item} />
-      <span className="short-tile-title">{item.headline}</span>
+      <span className="short-tile-text">
+        <span className="short-tile-title">{item.headline}</span>
+        <FollowTag item={item} />
+      </span>
     </button>
   );
 }
@@ -128,6 +157,7 @@ export function VideoCard({ item, size = 'md' }: { item: VideoItem; size?: 'lg' 
       <div className="video-text">
         <h3>{item.headline}</h3>
         <Meta item={item} />
+        <FollowTag item={item} />
       </div>
     </article>
   );
@@ -142,6 +172,7 @@ export function Headline({ item, lead }: { item: NewsItem; lead?: boolean }) {
     <a className={cx('headline', lead && 'is-lead')} href={item.url} rel="noreferrer" target="_blank">
       <h3>{headline}</h3>
       <Meta extra={item.publishedAt ? timeShort(item.publishedAt) : undefined} item={item} />
+      <FollowTag item={item} />
     </a>
   );
 }
@@ -172,6 +203,7 @@ export function EpisodeTile({ item }: { item: PodcastItem }) {
       </span>
       <strong>{item.title}</strong>
       <Meta extra={label} item={item} />
+      <FollowTag item={item} />
     </button>
   );
 }
@@ -191,6 +223,7 @@ export function EpisodeRow({ item }: { item: PodcastItem }) {
       <span className="episode-row-text">
         <strong>{item.title}</strong>
         <Meta extra={label} item={item} />
+        <FollowTag item={item} />
       </span>
     </button>
   );
@@ -228,6 +261,7 @@ export function PostCard({ item }: { item: SocialItem }) {
           {attached.kind === 'podcast' ? <Artwork sourceId={attached.sourceId} /> : <Thumb item={attached as VideoItem} />}
         </span>
       ) : null}
+      <FollowTag item={item} />
     </article>
   );
 }

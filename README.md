@@ -1,22 +1,12 @@
-# OcheHub Feed: redesign prototype, style 2
+# OcheHub Feed: redesign prototype
 
 A standalone, mobile-first rebuild of the OcheHub Feed. It is a separate website: nothing here imports from, or writes to, the main `ochehub` repo.
 
-## Two styles, two branches
-
-| Branch | Style | Published at |
-| --- | --- | --- |
-| `main` | Style 1: bold cards, italic capitals, cream news front page | `/` |
-| `style-2` (this one) | Style 2: no card boxes, minimal UI and text, pictures and type on a near-black canvas | `/style-2/` |
-
-Both branches share the same data, tailoring and player behaviour; they differ in the feed and card design. The Pages workflow on `main` publishes both: `main`'s `dist/` at the site root and this branch's `dist/` under `/style-2/`.
-
-What style 2 changes:
+The design on `main` is the second style explored: no card boxes, minimal UI and text, pictures and type on a near-black canvas. It keeps one thing from the first style, the card slider at the top of For you. The first style is kept on the `style-1` branch.
 
 - No borders or card boxes. A card is its picture, a title and at most one quiet line. Shape says what it is: 16:9 is a video, 9:16 a Short, a square a podcast, bare type a headline.
-- The top story fills the screen width and fades into the page, under a clear header.
-- No tags, kickers or "because you follow" lines. A green dot marks items that are there because of a player or competition you follow.
-- No strip under the tabs on For you. Tune is the icon in the header.
+- "Following Luke Littler" appears under items that are placed where they are because of a player or competition you follow. Nothing else is tagged, and the tags go away when follows are switched off in Tune.
+- Swiping left or right anywhere on a page moves to the next tab, following your finger. Carousels and rails keep their own sideways scroll.
 - Titles are shown without emoji, all-caps shouting or repeated exclamation marks (`tidy()` in `src/data/content.ts`). The snapshot keeps each source's wording.
 - Save lives in the player rather than on every card.
 - Bottom navigation is a floating icon dock, with the mini player as a pill above it.
@@ -44,12 +34,14 @@ npm run typecheck
 
 | Tab | What it shows |
 | --- | --- |
-| For you | A sequence of different modules rather than one list: full-width top story, Shorts rail, headlines, a video feature, podcast rail, socials, then longer lists |
+| For you | A sequence of different modules rather than one list: card slider, Shorts rail, headlines, a video feature, podcast rail, socials, then longer lists |
 | Videos | Lead video plus list, filterable by channel |
 | Shorts | Two-column grid of 9:16 tiles |
 | Podcasts | Continue listening, the four shows, latest episodes |
 | News | Type only: one large lead headline, then the rest |
 | Social | Posts from the sources' accounts (sample content, see below) |
+
+Move between tabs by tapping them or by swiping the page sideways. The page follows your finger, the next one slides in beside it, and the green dot under the tabs travels with them. Let go past about a third of the way, or flick, and it carries on; otherwise it springs back. Swipes that start on a carousel or rail scroll that instead.
 
 ### Tailoring
 
@@ -60,6 +52,8 @@ The **Tune** icon in the header opens the personalisation sheet. It starts from 
 - choose which content types are in the mix.
 
 Changes are staged and applied together, and the Apply button shows how many items the feed will hold. Tapping a player or competition inside the video card focuses For you on that one follow.
+
+Follows also show up in the feed itself: an item that ranks where it does because of a followed player or competition carries a green "Following …" line (`FollowTag` in `src/feed/cards.tsx`, using `reasonFor` in `src/lib/feed.ts`). Followed channels, shows and publishers lift their items too but are not tagged, since the source name is already on the card.
 
 ### Player
 
@@ -90,12 +84,18 @@ scripts/      build.mjs, serve.mjs
 
 The player animation is driven by three numbers in `player/PlayerHost.tsx`: `open` (card sliding up), `mini` (full card morphing into the mini bar) and `x` (the card pager). The media element never remounts between full and mini, which is why playback carries straight through the morph.
 
+The tab pager lives in `app.tsx`. The current page stays in the document flow; while you swipe, the neighbouring page is mounted and pinned to the screen beside it, and when the swipe lands it takes over the flow without remounting.
+
 ### Bringing it into the app
 
 - `styles/tokens.css` mirrors `@ochehub/tokens` and the roles in `@ochehub/ui/theme`; swap the variables for the app's and the rest follows.
 - `lib/motion.ts` maps onto framer-motion's `useMotionValue` and `animate(..., { type: 'spring' })`, which `apps/web` already has.
 - `data/types.ts` follows the Feed DTOs in `@ochehub/types`, with `short` and `social` added.
 - Source ids match `apps/api/src/providers/feed/sources.ts`.
+
+## Publishing
+
+`.github/workflows/pages.yml` publishes `dist/` from `main` to GitHub Pages on every push to `main`. `dist/` is committed, so the workflow does not build anything: run `npm run build` (or `node scripts/build.mjs`) before committing a change.
 
 ## Content
 

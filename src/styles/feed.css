@@ -8,6 +8,10 @@
 
 .feed-shell {
   min-height: 100dvh;
+  /* Sideways swipes belong to the pager; the browser keeps vertical scrolling. */
+  touch-action: pan-y pinch-zoom;
+  /* A page waiting off to one side must not widen the document. */
+  overflow-x: clip;
   padding-bottom: calc(var(--nav-h) + 40px);
   /* Recedes a touch while the player card is up. */
   transform: scale(calc(1 - var(--player-depth, 0) * 0.045));
@@ -26,7 +30,7 @@ html.player-mini .feed-shell {
   transition: transform var(--slow) var(--ease-out);
 }
 
-/* Clear over the hero; frosted once content runs underneath. */
+/* Clear at the top of a page; frosted once content runs underneath. */
 .masthead::before {
   content: '';
   position: absolute;
@@ -112,8 +116,8 @@ html.player-mini .feed-shell {
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 12px rgba(93, 255, 79, 0.9);
+  /* Positioned from script, in step with the pages as they slide. */
   transform: translate3d(var(--dot-x, 40px), 0, 0);
-  transition: transform 520ms var(--ease-out);
 }
 
 .feed {
@@ -121,14 +125,34 @@ html.player-mini .feed-shell {
   margin: 0 auto;
 }
 
-/* Tab changes slide in from the side you moved towards. */
-.view {
-  animation: view-in 520ms var(--ease-out) both;
+/*
+ * Pages. The current one sits in the document flow. While you swipe, the next
+ * one is pinned to the screen beside it; when the swipe lands it takes over
+ * the flow, already in place.
+ */
+.feed {
+  position: relative;
 }
 
-/* The hero runs up underneath the header. */
-.view.has-hero {
-  margin-top: calc((var(--appbar-h) + var(--tabbar-h)) * -1);
+.page {
+  will-change: transform;
+}
+
+.page.is-peek {
+  position: absolute;
+  top: var(--peek-top, 0);
+  left: 0;
+  width: 100%;
+  height: var(--peek-h, 100vh);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* A page arriving from the side is already complete; nothing fades up inside it. */
+.page.is-peek .reveal {
+  opacity: 1;
+  transform: none;
+  transition: none;
 }
 
 @keyframes view-in {
@@ -194,68 +218,50 @@ html.player-mini .feed-shell {
   color: var(--accent);
 }
 
-/* ================================================================= hero */
+/* ============================================================ spotlight */
 
-.hero {
-  position: relative;
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+.spotlight {
+  margin-top: 14px;
 }
 
-.hero-track {
+.spot-track {
+  --card: min(100vw - 56px, 430px);
   display: flex;
+  gap: 10px;
+  padding: 0 calc((100% - var(--card)) / 2);
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-x: contain;
 }
 
-.hero-track::-webkit-scrollbar {
+.spot-track::-webkit-scrollbar {
   display: none;
 }
 
-.hero-slide {
+.spot {
   --drift: 0;
-  --edge: max(var(--gutter), calc((100vw - var(--feed-max)) / 2 + var(--gutter)));
   position: relative;
-  flex: 0 0 100%;
-  height: clamp(460px, 70svh, 620px);
+  flex: 0 0 var(--card);
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  scroll-snap-align: start;
+  scroll-snap-align: center;
   scroll-snap-stop: always;
+  background: var(--blue-1000);
+  box-shadow: 0 24px 50px -24px rgba(0, 0, 0, 0.9);
+  isolation: isolate;
 }
 
-.hero-media {
-  position: absolute;
-  inset: 0 -8%;
-  /* The picture travels slower than the slide. */
-  transform: translate3d(calc(var(--drift) * -7%), 0, 0);
-  will-change: transform;
+.spot {
+  transition: transform var(--normal) var(--ease-out);
 }
 
-/* A slow push in on whichever picture is showing. */
-.hero-media .thumb img {
-  transform: scale(1.02);
-  transition:
-    opacity 500ms ease,
-    transform 9s linear;
+.spot:active {
+  transform: scale(0.985);
 }
 
-.hero-slide.is-active .hero-media .thumb img {
-  transform: scale(1.1);
-}
-
-/* No edges: the picture simply runs out into the page. */
-.hero-fade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(8, 10, 18, 0.78) 0%, rgba(8, 10, 18, 0) 30%),
-    linear-gradient(0deg, var(--canvas) 0%, rgba(8, 10, 18, 0.9) 20%, rgba(8, 10, 18, 0.45) 44%, rgba(8, 10, 18, 0) 68%);
-  pointer-events: none;
-}
-
-.hero-hit,
+.spot-hit,
 .card-hit {
   position: absolute;
   inset: 0;
@@ -263,138 +269,193 @@ html.player-mini .feed-shell {
   border-radius: inherit;
 }
 
-.hero-body {
+.spot-media {
   position: absolute;
-  left: var(--edge);
-  right: calc(var(--edge) + 76px);
-  bottom: 48px;
-  display: grid;
-  gap: 10px;
+  inset: 0 -9%;
+  /* The picture moves slower than the card: a little depth as you swipe. */
+  transform: translate3d(calc(var(--drift) * -7%), 0, 0);
+  will-change: transform;
+}
+
+.spot-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 10, 18, 0.55) 0%, rgba(8, 10, 18, 0) 22%),
+    linear-gradient(0deg, rgba(8, 10, 18, 0.98) 0%, rgba(8, 10, 18, 0.82) 30%, rgba(8, 10, 18, 0) 66%);
   pointer-events: none;
-  opacity: 0;
-  transform: translate3d(0, 14px, 0);
-  transition:
-    opacity 600ms var(--ease-out),
-    transform 800ms var(--ease-out);
 }
 
-.hero-slide.is-active .hero-body {
-  opacity: 1;
-  transform: none;
-}
-
-.hero-title {
-  font-size: clamp(36px, 10.4vw, 52px);
+.spot-count {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 2;
+  font-family: var(--font-mono);
+  font-size: 13px;
   font-weight: 600;
-  line-height: 0.98;
-  letter-spacing: -0.022em;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.spot-count i {
+  font-style: normal;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.spot-body {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.spot-title {
+  font-size: clamp(30px, 9.4vw, 44px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 0.94;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
   text-wrap: balance;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 4;
   overflow: hidden;
-  padding-bottom: 0.08em;
+  padding-right: 4px;
 }
 
-.hero-title.is-long {
-  font-size: clamp(26px, 7.2vw, 36px);
-  line-height: 1.04;
-  letter-spacing: -0.015em;
+.spot-title.is-long {
+  font-size: clamp(22px, 6.4vw, 30px);
+  font-weight: 800;
+  line-height: 1.02;
+  text-transform: none;
 }
 
-.hero-play {
+.spot-context {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.spot-body .follow-tag {
+  font-size: 14px;
+}
+
+.spot-foot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.spot-source {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spot-play {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 44px;
+  padding: 0 18px 0 12px;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: var(--accent);
+  box-shadow: 0 8px 24px -6px rgba(93, 255, 79, 0.6);
+}
+
+.spot-podcast .spot-play {
+  color: #2b1d00;
+  background: var(--amber-500);
+  box-shadow: 0 8px 24px -6px rgba(255, 209, 102, 0.6);
+}
+
+/* Podcast variant: the artwork floats over a blurred wash of itself. */
+.spot-art-wash {
   position: absolute;
-  right: var(--edge);
-  bottom: 48px;
-  display: grid;
-  place-items: center;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  color: var(--ink);
-  background: var(--paper);
-  pointer-events: none;
-  opacity: 0;
-  transform: scale(0.8);
-  transition:
-    opacity 500ms var(--ease-out) 120ms,
-    transform 700ms var(--ease-spring) 120ms;
-}
-
-.hero-slide.is-active .hero-play {
-  opacity: 1;
-  transform: none;
-}
-
-/* Podcast slide: the cover floats on a wash of its own colours. */
-.hero-wash {
-  position: absolute;
-  inset: -14%;
+  inset: -12%;
   width: auto;
   height: auto;
-  filter: blur(44px) saturate(1.5);
-  opacity: 0.85;
+  filter: blur(34px) saturate(1.5);
+  opacity: 0.8;
 }
 
-.hero-art {
+.spot-art {
   position: absolute;
-  top: 21%;
+  top: 13%;
   left: 50%;
-  width: min(46%, 240px);
+  width: 46%;
   height: auto;
   aspect-ratio: 1;
-  border-radius: 24px;
-  box-shadow: 0 34px 70px -20px rgba(0, 0, 0, 0.85);
-  transform: translateX(-50%);
+  margin-left: -23%;
+  border-radius: 18px;
+  box-shadow: 0 24px 50px -12px rgba(0, 0, 0, 0.8);
+  transform: rotate(-4deg);
 }
 
-.hero-bars {
-  --edge: max(var(--gutter), calc((100vw - var(--feed-max)) / 2 + var(--gutter)));
-  position: absolute;
-  left: var(--edge);
-  right: var(--edge);
-  bottom: 12px;
-  z-index: 2;
+.spot-pips {
   display: flex;
+  justify-content: center;
   gap: 6px;
+  margin-top: 12px;
+  padding: 0 var(--gutter);
 }
 
-.hero-bar {
-  flex: 1;
+.spot-pip {
+  flex: 0 1 44px;
+  height: 22px;
   display: grid;
   align-items: center;
-  height: 22px;
 }
 
-.hero-bar::before,
-.hero-bar i {
+.spot-pip::before,
+.spot-pip i {
   content: '';
   grid-area: 1 / 1;
   display: block;
-  height: 2px;
-  border-radius: 2px;
+  height: 3px;
+  border-radius: 3px;
 }
 
-.hero-bar::before {
-  background: rgba(255, 255, 255, 0.2);
+.spot-pip::before {
+  background: rgba(255, 255, 255, 0.18);
 }
 
-.hero-bar i {
-  background: #fff;
+.spot-pip i {
+  background: var(--accent);
   transform: scaleX(0);
   transform-origin: 0 50%;
 }
 
-.hero-bar.is-done i,
-.hero-bar.is-active i {
+.spot-pip.is-active i {
   transform: scaleX(1);
 }
 
-.hero-bar.is-active.is-running i {
-  animation: bar var(--interval) linear both;
+.spot-pip.is-active.is-running i {
+  animation: pip var(--interval) linear both;
 }
 
-@keyframes bar {
+@keyframes pip {
   from {
     transform: scaleX(0);
   }
@@ -409,8 +470,8 @@ html.player-mini .feed-shell {
   margin-top: 52px;
 }
 
-.hero + .module {
-  margin-top: 40px;
+.spotlight + .module {
+  margin-top: 44px;
 }
 
 .sec {
@@ -515,12 +576,17 @@ html.player-mini .feed-shell {
   pointer-events: none;
 }
 
-.short-tile-title {
+.short-tile-text {
   position: absolute;
   left: 14px;
   right: 14px;
   bottom: 14px;
   z-index: 1;
+  display: grid;
+  gap: 5px;
+}
+
+.short-tile-title {
   font-size: 15.5px;
   font-weight: 600;
   line-height: 1.12;
@@ -1297,6 +1363,14 @@ html.player-mini .feed-shell {
 /* ================================================================ wider */
 
 @media (min-width: 600px) {
+  .spot {
+    aspect-ratio: 5 / 4;
+  }
+
+  .spot-title {
+    font-size: 46px;
+  }
+
   .short-tile {
     width: 176px;
   }
@@ -1360,61 +1434,47 @@ html.player-mini .feed-shell {
     padding: 0 calc(var(--gutter) - 12px);
   }
 
-  .hero-slide {
-    height: clamp(520px, 74vh, 760px);
+  .spotlight {
+    margin-top: 20px;
   }
 
-  .hero-fade {
-    background:
-      linear-gradient(180deg, rgba(8, 10, 18, 0.72) 0%, rgba(8, 10, 18, 0) 26%),
-      linear-gradient(90deg, rgba(8, 10, 18, 0.7) 0%, rgba(8, 10, 18, 0) 55%),
-      linear-gradient(0deg, var(--canvas) 0%, rgba(8, 10, 18, 0.8) 18%, rgba(8, 10, 18, 0) 60%);
+  .spot-track {
+    --card: min(64%, 760px);
+    gap: 18px;
+    padding: 0 var(--gutter);
+    scroll-padding-inline: var(--gutter);
   }
 
-  .hero-body {
-    right: auto;
-    bottom: 72px;
-    width: min(640px, 50vw);
-    gap: 14px;
+  .spot {
+    aspect-ratio: 16 / 9;
+    scroll-snap-align: start;
   }
 
-  .hero-title {
-    font-size: 76px;
-    line-height: 0.94;
-    letter-spacing: -0.03em;
+  .spot-body {
+    left: 28px;
+    right: 28px;
+    bottom: 24px;
+    max-width: 620px;
   }
 
-  .hero-title.is-long {
-    font-size: 48px;
-    line-height: 1;
+  .spot-title {
+    font-size: 54px;
   }
 
-  .hero-play {
-    bottom: 72px;
-    width: 72px;
-    height: 72px;
+  .spot-title.is-long {
+    font-size: 34px;
   }
 
-  .hero-art {
-    top: 16%;
-    left: auto;
-    right: max(var(--gutter), calc((100vw - var(--feed-max)) / 2 + 140px));
-    width: min(30vw, 380px);
-    transform: none;
-  }
-
-  .hero-bars {
-    bottom: 26px;
-    right: auto;
-    width: 320px;
+  .spot-pips {
+    justify-content: flex-start;
   }
 
   .module {
     margin-top: 76px;
   }
 
-  .hero + .module {
-    margin-top: 56px;
+  .spotlight + .module {
+    margin-top: 60px;
   }
 
   .sec {
@@ -1434,11 +1494,14 @@ html.player-mini .feed-shell {
     border-radius: 26px;
   }
 
-  .short-tile-title {
-    font-size: 18px;
+  .short-tile-text {
     left: 18px;
     right: 18px;
     bottom: 18px;
+  }
+
+  .short-tile-title {
+    font-size: 18px;
   }
 
   .shorts-grid {
@@ -1547,7 +1610,8 @@ html.player-mini .feed-shell {
     transform: translateY(-4px);
   }
 
-  .video:hover .thumb img {
+  .video:hover .thumb img,
+  .spot:hover .thumb img {
     transform: scale(1.04);
   }
 

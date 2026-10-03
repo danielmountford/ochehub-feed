@@ -221,14 +221,18 @@ button:disabled {
   white-space: nowrap;
 }
 
-/* "This is here because of someone you follow." */
-.follow-dot {
-  flex: none;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 10px rgba(93, 255, 79, 0.8);
+/* "Following Luke Littler": this is here because of someone you follow. */
+.follow-tag {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.005em;
+  color: var(--accent);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --------------------------------------------------------------- buttons */

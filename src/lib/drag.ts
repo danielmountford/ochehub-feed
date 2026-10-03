@@ -44,7 +44,16 @@ interface Sample {
   y: number;
 }
 
-export function attachDrag(element: HTMLElement, handlers: DragHandlers) {
+export interface DragOptions {
+  /**
+   * How much further sideways than vertically the pointer must have travelled
+   * for the gesture to count as horizontal. Above 1 favours scrolling.
+   */
+  xBias?: number;
+}
+
+export function attachDrag(element: HTMLElement, handlers: DragHandlers, options: DragOptions = {}) {
+  const xBias = options.xBias ?? 1;
   let start: DragStart | null = null;
   let startTime = 0;
   let axis: Axis | null = null;
@@ -98,7 +107,7 @@ export function attachDrag(element: HTMLElement, handlers: DragHandlers) {
       if (Math.abs(dx) < SLOP && Math.abs(dy) < SLOP) {
         return false;
       }
-      axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+      axis = Math.abs(dx) > Math.abs(dy) * xBias ? 'x' : 'y';
       const direction = (axis === 'x' ? dx : dy) > 0 ? 1 : -1;
       claimed = handlers.claim(axis, direction, start);
       if (!claimed) {

@@ -6,7 +6,7 @@ import { useStore } from '../lib/store';
 import { playerStore } from '../player/controller';
 import { cx, Reveal } from '../ui/bits';
 import { ArrowRightIcon } from '../ui/icons';
-import { EpisodeRow, EpisodeTile, Headline, HeroSlide, PostCard, ShortTile, VideoCard } from './cards';
+import { EpisodeRow, EpisodeTile, Headline, PostCard, ShortTile, SpotlightCard, VideoCard } from './cards';
 
 /* --------------------------------------------------------- section label */
 
@@ -25,16 +25,16 @@ export function SectionHead({ title, onMore, note }: { title: string; onMore?: (
   );
 }
 
-/* ------------------------------------------------------------------ hero */
+/* ------------------------------------------------------------- spotlight */
 
-const HERO_INTERVAL = 6500;
+const SPOT_INTERVAL = 6500;
 
 /**
- * The top of For you: one picture the width of the screen that dissolves into
- * the page, with a title and nothing else. Swipe sideways for the next one;
- * left alone, it moves on by itself and the bars underneath keep time.
+ * The slider at the top of For you. Native scroll-snap does the swiping (so it
+ * feels like the platform); on top of that the picture drifts at a different
+ * speed to its card, and a timer walks through the cards until you touch it.
  */
-export function Hero({ items }: { items: (VideoItem | PodcastItem)[] }) {
+export function Spotlight({ items }: { items: (VideoItem | PodcastItem)[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -42,7 +42,7 @@ export function Hero({ items }: { items: (VideoItem | PodcastItem)[] }) {
   const playerBusy = useStore(playerStore, (state) => state.mode === 'full');
   const auto = !paused && inView && !playerBusy && items.length > 1 && !prefersReducedMotion();
 
-  // The picture drifts against the swipe, and the nearest slide becomes active.
+  // Parallax and the active card, both read off the scroll position.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) {
@@ -51,12 +51,20 @@ export function Hero({ items }: { items: (VideoItem | PodcastItem)[] }) {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const width = track.clientWidth || 1;
+      const centre = track.scrollLeft + track.clientWidth / 2;
+      let nearest = 0;
+      let nearestDistance = Number.POSITIVE_INFINITY;
       Array.from(track.children).forEach((child, index) => {
-        const delta = (index * width - track.scrollLeft) / width;
-        (child as HTMLElement).style.setProperty('--drift', delta.toFixed(4));
+        const card = child as HTMLElement;
+        const cardCentre = card.offsetLeft + card.offsetWidth / 2;
+        const delta = (cardCentre - centre) / card.offsetWidth;
+        card.style.setProperty('--drift', delta.toFixed(4));
+        if (Math.abs(delta) < nearestDistance) {
+          nearestDistance = Math.abs(delta);
+          nearest = index;
+        }
       });
-      setActive(Math.max(0, Math.min(items.length - 1, Math.round(track.scrollLeft / width))));
+      setActive(nearest);
     };
     const onScroll = () => {
       if (!frame) {
@@ -85,45 +93,50 @@ export function Hero({ items }: { items: (VideoItem | PodcastItem)[] }) {
 
   function goTo(index: number) {
     const track = trackRef.current;
-    track?.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' });
+    const card = track?.children[index] as HTMLElement | undefined;
+    if (!track || !card) {
+      return;
+    }
+    track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2, behavior: 'smooth' });
   }
 
   useEffect(() => {
     if (!auto) {
       return;
     }
-    const timer = window.setTimeout(() => goTo((active + 1) % items.length), HERO_INTERVAL);
+    const timer = window.setTimeout(() => goTo((active + 1) % items.length), SPOT_INTERVAL);
     return () => window.clearTimeout(timer);
     // goTo only reads refs, so it is safe to leave out.
   }, [auto, active, items.length]);
 
   return (
-    <section aria-label="Top of your feed" className="hero">
+    <section aria-label="Top of your feed" className="spotlight">
       <div
-        className="hero-track"
+        className="spot-track"
+        data-hscroll
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onPointerDown={() => setPaused(true)}
         ref={trackRef}
       >
         {items.map((item, index) => (
-          <HeroSlide active={index === active} eager={index < 2} item={item} key={item.id} />
+          <SpotlightCard eager={index < 2} item={item} key={item.id} position={index} total={items.length} />
         ))}
       </div>
       {items.length > 1 ? (
-        <div className="hero-bars" role="tablist">
+        <div className="spot-pips" role="tablist">
           {items.map((item, index) => (
             <button
               aria-label={`Show item ${index + 1} of ${items.length}`}
               aria-selected={index === active}
-              className={cx('hero-bar', index === active && 'is-active', index < active && 'is-done', auto && 'is-running')}
+              className={cx('spot-pip', index === active && 'is-active', auto && 'is-running')}
               key={item.id}
               onClick={() => {
                 setPaused(true);
                 goTo(index);
               }}
               role="tab"
-              style={{ '--interval': `${HERO_INTERVAL}ms` } as CSSProperties}
+              style={{ '--interval': `${SPOT_INTERVAL}ms` } as CSSProperties}
               type="button"
             >
               <i />
@@ -151,7 +164,7 @@ export function Rail({ children, className }: { children: ReactNode; className?:
 export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: string) => void }) {
   switch (module.type) {
     case 'spotlight':
-      return <Hero items={module.items} />;
+      return <Spotlight items={module.items} />;
 
     case 'shorts':
       return (
