@@ -109,12 +109,11 @@ export function ShortOverlay({ item, live }: { item: VideoItem; live?: boolean }
       </div>
 
       <div className="so-caption">
-        <div className="so-source">
-          <SourceAvatar size={32} sourceId={item.sourceId} />
-          <strong>{source?.name}</strong>
-        </div>
         <h2>{item.headline}</h2>
-        {item.context ? <p>{item.context}</p> : null}
+        <div className="so-source">
+          <SourceAvatar size={24} sourceId={item.sourceId} />
+          <span>{source?.name}</span>
+        </div>
       </div>
 
       {live ? <ProgressLine className="so-line" /> : null}

@@ -1,6 +1,25 @@
-# OcheHub Feed: redesign prototype
+# OcheHub Feed: redesign prototype, style 2
 
 A standalone, mobile-first rebuild of the OcheHub Feed. It is a separate website: nothing here imports from, or writes to, the main `ochehub` repo.
+
+## Two styles, two branches
+
+| Branch | Style | Published at |
+| --- | --- | --- |
+| `main` | Style 1: bold cards, italic capitals, cream news front page | `/` |
+| `style-2` (this one) | Style 2: no card boxes, minimal UI and text, pictures and type on a near-black canvas | `/style-2/` |
+
+Both branches share the same data, tailoring and player behaviour; they differ in the feed and card design. The Pages workflow on `main` publishes both: `main`'s `dist/` at the site root and this branch's `dist/` under `/style-2/`.
+
+What style 2 changes:
+
+- No borders or card boxes. A card is its picture, a title and at most one quiet line. Shape says what it is: 16:9 is a video, 9:16 a Short, a square a podcast, bare type a headline.
+- The top story fills the screen width and fades into the page, under a clear header.
+- No tags, kickers or "because you follow" lines. A green dot marks items that are there because of a player or competition you follow.
+- No strip under the tabs on For you. Tune is the icon in the header.
+- Titles are shown without emoji, all-caps shouting or repeated exclamation marks (`tidy()` in `src/data/content.ts`). The snapshot keeps each source's wording.
+- Save lives in the player rather than on every card.
+- Bottom navigation is a floating icon dock, with the mini player as a pill above it.
 
 ## Run it
 
@@ -25,22 +44,22 @@ npm run typecheck
 
 | Tab | What it shows |
 | --- | --- |
-| For you | A sequence of different modules rather than one list: spotlight carousel, Shorts rail, headlines, a video feature, podcast rail, socials, then longer lists |
+| For you | A sequence of different modules rather than one list: full-width top story, Shorts rail, headlines, a video feature, podcast rail, socials, then longer lists |
 | Videos | Lead video plus list, filterable by channel |
 | Shorts | Two-column grid of 9:16 tiles |
 | Podcasts | Continue listening, the four shows, latest episodes |
-| News | A "front page" lead and a time-stamped wire |
+| News | Type only: one large lead headline, then the rest |
 | Social | Posts from the sources' accounts (sample content, see below) |
 
 ### Tailoring
 
-The **Tune** button (and the strip under the tabs) opens the personalisation sheet. It starts from what the account already follows in OcheHub (`accountFollows` in `src/data/catalogue.ts`: players, competitions, channels, shows and publishers) and lets the viewer:
+The **Tune** icon in the header opens the personalisation sheet. It starts from what the account already follows in OcheHub (`accountFollows` in `src/data/catalogue.ts`: players, competitions, channels, shows and publishers) and lets the viewer:
 
 - choose how much follows matter: Everything, Follows first, or Only follows;
 - follow and unfollow players, competitions and sources;
 - choose which content types are in the mix.
 
-Changes are staged and applied together, and the Apply button shows how many items the feed will hold. Tapping a player or competition chip inside the video card focuses For you on that one follow.
+Changes are staged and applied together, and the Apply button shows how many items the feed will hold. Tapping a player or competition inside the video card focuses For you on that one follow.
 
 ### Player
 

@@ -62,3 +62,26 @@ export function initials(first: string, last: string) {
   const lastWord = last.split(' ').pop() ?? last;
   return `${first[0] ?? ''}${lastWord[0] ?? ''}`.toUpperCase();
 }
+
+/** Shortest useful age: "23m", "3h", "2d", "3w", then a date. */
+export function timeShort(iso: string | undefined) {
+  if (!iso) {
+    return '';
+  }
+  const minutes = Math.max(1, Math.round((SNAPSHOT_NOW - Date.parse(iso)) / 60_000));
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) {
+    return `${hours}h`;
+  }
+  const days = Math.round(hours / 24);
+  if (days < 7) {
+    return `${days}d`;
+  }
+  if (days < 35) {
+    return `${Math.round(days / 7)}w`;
+  }
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+}

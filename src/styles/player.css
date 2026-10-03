@@ -6,7 +6,7 @@
 .player {
   --mini: 0;
   --stage-aspect: 16 / 9;
-  --play: var(--accent);
+  --play: #fff;
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -20,7 +20,6 @@
 
 .player.kind-podcast {
   --stage-aspect: 1;
-  --play: var(--amber-500);
 }
 
 .player.is-closed {
@@ -41,7 +40,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #0b0e17;
+  background: #05060b;
   transform-origin: 0 0;
   will-change: transform;
 }
@@ -49,7 +48,7 @@
 .player-bg-mini {
   position: absolute;
   inset: 0;
-  background: linear-gradient(100deg, #17296a 0%, #0f1f4d 46%, #0b1a41 100%);
+  background: #1b1f2e;
   opacity: 0;
 }
 
@@ -115,13 +114,10 @@
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 10px;
   padding-top: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
 
@@ -479,8 +475,9 @@
 .scrub-times {
   display: flex;
   justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   color: var(--text-muted);
 }
 
@@ -520,89 +517,51 @@
 
 .vslide-body {
   display: grid;
-  gap: 14px;
-  padding: 16px var(--gutter) calc(28px + env(safe-area-inset-bottom, 0px));
+  gap: 18px;
+  padding: 22px var(--gutter) calc(32px + env(safe-area-inset-bottom, 0px));
 }
 
-.vslide-tags {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 
 .vslide-title {
-  font-size: clamp(26px, 7.6vw, 34px);
-  font-weight: 900;
-  font-style: italic;
-  line-height: 1;
+  font-size: clamp(28px, 8vw, 36px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
   text-wrap: balance;
 }
 
 .vslide-context {
-  margin-top: -6px;
+  margin-top: -8px;
   font-size: 16px;
   color: var(--text-muted);
 }
 
 .vslide-source {
-  display: grid;
-  grid-template-columns: 40px 1fr auto;
+  display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px 10px 10px;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  gap: 10px;
 }
 
-.vslide-source > div {
-  display: grid;
-  min-width: 0;
-}
 
 .vslide-source strong {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.vslide-source span {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
-  font-size: 13px;
-  color: var(--text-muted);
+  font-size: 16.5px;
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.action-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
+
+.icon-row {
+  display: flex;
+  gap: 2px;
+  margin: -6px 0 -6px -11px;
 }
 
-.action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-width: 44px;
-  height: 46px;
-  padding: 0 12px;
-  border-radius: 99px;
-  font-size: 14.5px;
-  font-weight: 700;
-  color: var(--text);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
-  transition: transform var(--fast) ease;
-}
 
-.action:active {
-  transform: scale(0.96);
-}
 
-.action.save-btn.is-saved {
-  color: var(--accent);
-}
 
 .upnext {
   display: grid;
@@ -622,7 +581,7 @@
 
 .upnext-thumb {
   aspect-ratio: 16 / 9;
-  border-radius: 10px;
+  border-radius: 14px;
   overflow: hidden;
 }
 
@@ -699,14 +658,17 @@
 .so-source {
   display: flex;
   align-items: center;
-  gap: 9px;
-  font-size: 15px;
+  gap: 8px;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .so-caption h2 {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.08;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.012em;
   text-wrap: balance;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -714,17 +676,13 @@
   overflow: hidden;
 }
 
-.so-caption p {
-  font-size: 13.5px;
-  color: var(--text-muted);
-}
 
 .so-rail {
   position: absolute;
-  right: 10px;
-  bottom: 20px;
+  right: 8px;
+  bottom: 14px;
   display: grid;
-  gap: 12px;
+  gap: 6px;
 }
 
 .so-action {
@@ -735,10 +693,7 @@
   min-width: 0;
   border-radius: 50%;
   color: #fff;
-  background: rgba(8, 10, 18, 0.5);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  filter: drop-shadow(0 1px 8px rgba(0, 0, 0, 0.7));
 }
 
 span.so-action {
@@ -867,24 +822,17 @@ span.so-action {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-family: var(--font-mono);
-  font-size: 11.5px;
+  font-size: 15.5px;
   font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--amber-500);
+  color: var(--text-muted);
 }
 
-.pslide-show .follow-btn {
-  font-family: var(--font-display);
-  letter-spacing: 0;
-  text-transform: none;
-}
 
 .pslide-meta h2 {
-  font-size: clamp(22px, 6.2vw, 28px);
-  font-weight: 800;
-  line-height: 1.06;
+  font-size: clamp(24px, 6.8vw, 32px);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.018em;
   text-wrap: balance;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -906,11 +854,10 @@ span.so-action {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 10px 10px 16px;
-  border-radius: var(--radius-md);
-  font-size: 14.5px;
-  background: rgba(255, 74, 85, 0.14);
-  box-shadow: inset 0 0 0 1px rgba(255, 74, 85, 0.4);
+  padding: 10px 10px 10px 18px;
+  border-radius: 99px;
+  font-size: 15px;
+  background: rgba(255, 74, 85, 0.16);
 }
 
 .pslide-error .pill-btn {
@@ -957,59 +904,39 @@ span.so-action {
 .transport-play {
   width: 78px;
   height: 78px;
-  color: #2b1d00;
-  background: var(--amber-500);
-  box-shadow: 0 14px 34px -10px rgba(255, 209, 102, 0.6);
+  color: var(--ink);
+  background: var(--paper);
 }
 
 .pslide-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
+  margin-left: -8px;
 }
 
-.pslide-actions .action {
-  width: 46px;
-  padding: 0;
-}
 
 .rate-btn {
-  min-width: 58px;
-  height: 46px;
-  padding: 0 12px;
-  border-radius: 99px;
-  font-family: var(--font-mono);
-  font-size: 14px;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 8px;
+  font-size: 16px;
   font-weight: 600;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--hairline);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
 }
 
 .episodes-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 46px;
+  height: 44px;
   margin-left: auto;
-  padding: 0 14px;
-  border-radius: 99px;
-  font-size: 15px;
-  font-weight: 700;
-  background: var(--surface-raised);
-  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+  font-size: 15.5px;
+  font-weight: 600;
+  color: var(--text-muted);
 }
 
-.episodes-btn b {
-  min-width: 20px;
-  padding: 0 5px;
-  border-radius: 99px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 20px;
-  text-align: center;
-  color: #2b1d00;
-  background: var(--amber-500);
-}
 
 /* Episode list: rises over the lower part of the card. */
 .pslide-list {
@@ -1022,11 +949,9 @@ span.so-action {
   z-index: 5;
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  background: #141c36;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.12),
-    0 -24px 50px rgba(0, 0, 0, 0.5);
+  border-radius: 32px 32px 0 0;
+  background: #12151f;
+  box-shadow: 0 -30px 60px rgba(0, 0, 0, 0.5);
   transform: translate3d(0, 104%, 0);
   visibility: hidden;
   transition:
@@ -1068,19 +993,19 @@ span.so-action {
 }
 
 .pslide-list li button.is-active {
-  background: rgba(255, 209, 102, 0.12);
+  background: var(--fill);
 }
 
 .pslide-list-num {
   padding-top: 2px;
-  font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
   text-align: center;
   color: var(--text-faint);
 }
 
 .pslide-list .is-active .pslide-list-num {
-  color: var(--amber-500);
+  color: var(--accent);
 }
 
 .pslide-list-text {
@@ -1104,19 +1029,17 @@ span.so-action {
 
 .mini {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: calc(var(--nav-h) + 8px);
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--nav-h) + 2px);
   display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 0;
   height: 64px;
-  padding: 0 4px 0 8px;
-  border-radius: 18px;
+  padding: 0 6px 0 8px;
+  border-radius: 22px;
   opacity: 0;
-  box-shadow:
-    inset 0 0 0 1px rgba(121, 145, 210, 0.34),
-    0 16px 36px -8px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 18px 44px -12px rgba(0, 0, 0, 0.8);
   will-change: transform, opacity;
 }
 
@@ -1140,7 +1063,7 @@ span.so-action {
   flex: none;
   height: 48px;
   aspect-ratio: var(--stage-aspect);
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 .mini-text {
@@ -1189,15 +1112,12 @@ span.so-action {
 
 .mini-line {
   position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 0;
+  left: 26px;
+  right: 26px;
+  bottom: 3px;
   height: 2px;
   border-radius: 2px;
-}
-
-.mini-line i {
-  background: var(--play);
+  background: none;
 }
 
 /* ---------------------------------------------------------------- wider */
@@ -1271,8 +1191,7 @@ span.so-action {
   .player-arrows .icon-btn {
     width: 52px;
     height: 52px;
-    background: var(--surface-raised);
-    box-shadow: inset 0 0 0 1px var(--hairline-strong);
+    background: var(--fill);
     pointer-events: auto;
   }
 

@@ -5,7 +5,6 @@ import { episodesOfShow, type Focus, type FollowType, followLabel, prefsStore, r
 import { createStore, useStore } from '../lib/store';
 import { player } from '../player/controller';
 import { cx } from '../ui/bits';
-import { CheckIcon, PlusIcon } from '../ui/icons';
 
 /* ----------------------------------------------------------------- toast */
 
@@ -66,7 +65,6 @@ export function FollowButton({ type, id, compact }: { type: FollowType; id: stri
       }}
       type="button"
     >
-      {following ? <CheckIcon size={15} /> : <PlusIcon size={15} />}
       {following ? 'Following' : 'Follow'}
     </button>
   );

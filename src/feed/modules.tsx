@@ -6,48 +6,35 @@ import { useStore } from '../lib/store';
 import { playerStore } from '../player/controller';
 import { cx, Reveal } from '../ui/bits';
 import { ArrowRightIcon } from '../ui/icons';
-import {
-  EpisodeCard,
-  EpisodeRow,
-  FrontPage,
-  PostCard,
-  ShortTile,
-  SpotlightCard,
-  VideoLead,
-  VideoRow,
-  VideoTile,
-  WireRow,
-} from './cards';
+import { EpisodeRow, EpisodeTile, Headline, HeroSlide, PostCard, ShortTile, VideoCard } from './cards';
 
-/* --------------------------------------------------------- section head */
+/* --------------------------------------------------------- section label */
 
-/** Section title with the "oche line": the throw-line motif that runs through the feed. */
-export function SectionHead({ title, onMore, moreLabel, note }: { title: string; onMore?: () => void; moreLabel?: string; note?: string }) {
+/** A section is introduced by one word, and an arrow if there is more. */
+export function SectionHead({ title, onMore, note }: { title: string; onMore?: () => void; note?: string }) {
   return (
-    <header className="sec-head">
+    <header className="sec">
       <h2>{title}</h2>
-      <span aria-hidden="true" className="oche-line" />
       {note ? <span className="sec-note">{note}</span> : null}
       {onMore ? (
-        <button className="sec-more" onClick={onMore} type="button">
-          {moreLabel ?? 'All'}
-          <ArrowRightIcon size={16} />
+        <button aria-label={`All ${title.toLowerCase()}`} className="sec-more" onClick={onMore} type="button">
+          <ArrowRightIcon size={20} />
         </button>
       ) : null}
     </header>
   );
 }
 
-/* ------------------------------------------------------------- spotlight */
+/* ------------------------------------------------------------------ hero */
 
-const SPOT_INTERVAL = 6500;
+const HERO_INTERVAL = 6500;
 
 /**
- * Lead carousel. Native scroll-snap does the swiping (so it feels like the
- * platform); on top of that the artwork drifts at a different speed to the
- * card, and a story-style timer walks through the cards until you touch it.
+ * The top of For you: one picture the width of the screen that dissolves into
+ * the page, with a title and nothing else. Swipe sideways for the next one;
+ * left alone, it moves on by itself and the bars underneath keep time.
  */
-export function Spotlight({ items }: { items: (VideoItem | PodcastItem)[] }) {
+export function Hero({ items }: { items: (VideoItem | PodcastItem)[] }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -55,7 +42,7 @@ export function Spotlight({ items }: { items: (VideoItem | PodcastItem)[] }) {
   const playerBusy = useStore(playerStore, (state) => state.mode === 'full');
   const auto = !paused && inView && !playerBusy && items.length > 1 && !prefersReducedMotion();
 
-  // Parallax + active card from scroll position.
+  // The picture drifts against the swipe, and the nearest slide becomes active.
   useEffect(() => {
     const track = trackRef.current;
     if (!track) {
@@ -64,20 +51,12 @@ export function Spotlight({ items }: { items: (VideoItem | PodcastItem)[] }) {
     let frame = 0;
     const update = () => {
       frame = 0;
-      const centre = track.scrollLeft + track.clientWidth / 2;
-      let nearest = 0;
-      let nearestDistance = Number.POSITIVE_INFINITY;
+      const width = track.clientWidth || 1;
       Array.from(track.children).forEach((child, index) => {
-        const card = child as HTMLElement;
-        const cardCentre = card.offsetLeft + card.offsetWidth / 2;
-        const delta = (cardCentre - centre) / card.offsetWidth;
-        card.style.setProperty('--drift', delta.toFixed(4));
-        if (Math.abs(delta) < nearestDistance) {
-          nearestDistance = Math.abs(delta);
-          nearest = index;
-        }
+        const delta = (index * width - track.scrollLeft) / width;
+        (child as HTMLElement).style.setProperty('--drift', delta.toFixed(4));
       });
-      setActive(nearest);
+      setActive(Math.max(0, Math.min(items.length - 1, Math.round(track.scrollLeft / width))));
     };
     const onScroll = () => {
       if (!frame) {
@@ -106,54 +85,52 @@ export function Spotlight({ items }: { items: (VideoItem | PodcastItem)[] }) {
 
   function goTo(index: number) {
     const track = trackRef.current;
-    const card = track?.children[index] as HTMLElement | undefined;
-    if (!track || !card) {
-      return;
-    }
-    track.scrollTo({ left: card.offsetLeft - (track.clientWidth - card.offsetWidth) / 2, behavior: 'smooth' });
+    track?.scrollTo({ left: index * track.clientWidth, behavior: 'smooth' });
   }
 
   useEffect(() => {
     if (!auto) {
       return;
     }
-    const timer = window.setTimeout(() => goTo((active + 1) % items.length), SPOT_INTERVAL);
+    const timer = window.setTimeout(() => goTo((active + 1) % items.length), HERO_INTERVAL);
     return () => window.clearTimeout(timer);
     // goTo only reads refs, so it is safe to leave out.
   }, [auto, active, items.length]);
 
   return (
-    <section aria-label="Top of your feed" className="spotlight">
+    <section aria-label="Top of your feed" className="hero">
       <div
-        className="spot-track"
+        className="hero-track"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
         onPointerDown={() => setPaused(true)}
         ref={trackRef}
       >
         {items.map((item, index) => (
-          <SpotlightCard eager={index < 2} item={item} key={item.id} position={index} total={items.length} />
+          <HeroSlide active={index === active} eager={index < 2} item={item} key={item.id} />
         ))}
       </div>
-      <div className="spot-pips" role="tablist">
-        {items.map((item, index) => (
-          <button
-            aria-label={`Show item ${index + 1}`}
-            aria-selected={index === active}
-            className={cx('spot-pip', index === active && 'is-active', index < active && 'is-done', auto && 'is-running')}
-            key={item.id}
-            onClick={() => {
-              setPaused(true);
-              goTo(index);
-            }}
-            role="tab"
-            style={{ '--interval': `${SPOT_INTERVAL}ms` } as CSSProperties}
-            type="button"
-          >
-            <i />
-          </button>
-        ))}
-      </div>
+      {items.length > 1 ? (
+        <div className="hero-bars" role="tablist">
+          {items.map((item, index) => (
+            <button
+              aria-label={`Show item ${index + 1} of ${items.length}`}
+              aria-selected={index === active}
+              className={cx('hero-bar', index === active && 'is-active', index < active && 'is-done', auto && 'is-running')}
+              key={item.id}
+              onClick={() => {
+                setPaused(true);
+                goTo(index);
+              }}
+              role="tab"
+              style={{ '--interval': `${HERO_INTERVAL}ms` } as CSSProperties}
+              type="button"
+            >
+              <i />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -174,15 +151,15 @@ export function Rail({ children, className }: { children: ReactNode; className?:
 export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: string) => void }) {
   switch (module.type) {
     case 'spotlight':
-      return <Spotlight items={module.items} />;
+      return <Hero items={module.items} />;
 
     case 'shorts':
       return (
         <Reveal as="section" className="module">
           <SectionHead onMore={() => goTo('shorts')} title="Shorts" />
           <Rail className="rail-shorts">
-            {module.items.map((item, index) => (
-              <ShortTile index={index} item={item} key={item.id} />
+            {module.items.map((item) => (
+              <ShortTile item={item} key={item.id} />
             ))}
           </Rail>
         </Reveal>
@@ -193,14 +170,12 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
         <Reveal as="section" className="module">
           <SectionHead onMore={() => goTo('news')} title="Headlines" />
           <div className="headlines">
-            <FrontPage item={module.lead} />
-            {module.rest.length ? (
-              <div className="wire">
-                {module.rest.map((item) => (
-                  <WireRow item={item} key={item.id} />
-                ))}
-              </div>
-            ) : null}
+            <Headline item={module.lead} lead />
+            <div className="headline-list">
+              {module.rest.map((item) => (
+                <Headline item={item} key={item.id} />
+              ))}
+            </div>
           </div>
         </Reveal>
       );
@@ -208,13 +183,13 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
     case 'watch':
       return (
         <Reveal as="section" className="module">
-          <SectionHead onMore={() => goTo('videos')} title={module.title} />
+          <SectionHead onMore={() => goTo('videos')} title="Watch" />
           <div className="watch">
-            <VideoLead item={module.lead} />
+            <VideoCard item={module.lead} size="lg" />
             {module.rest.length ? (
               <div className="watch-pair">
                 {module.rest.map((item) => (
-                  <VideoTile item={item} key={item.id} />
+                  <VideoCard item={item} key={item.id} />
                 ))}
               </div>
             ) : null}
@@ -228,7 +203,7 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
           <SectionHead onMore={() => goTo('podcasts')} title="Listen" />
           <Rail className="rail-episodes">
             {module.items.map((item) => (
-              <EpisodeCard item={item} key={item.id} />
+              <EpisodeTile item={item} key={item.id} />
             ))}
           </Rail>
         </Reveal>
@@ -237,7 +212,7 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
     case 'social':
       return (
         <Reveal as="section" className="module">
-          <SectionHead note="Sample posts" onMore={() => goTo('social')} title="Socials" />
+          <SectionHead note="Sample posts" onMore={() => goTo('social')} title="Social" />
           <Rail className="rail-posts">
             {module.items.map((item) => (
               <PostCard item={item} key={item.id} />
@@ -249,11 +224,11 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
     case 'video-list':
       return (
         <section className="module">
-          <SectionHead onMore={() => goTo('videos')} title={module.title} />
+          <SectionHead onMore={() => goTo('videos')} title="More to watch" />
           <div className="video-list">
             {module.items.map((item, index) => (
               <Reveal delay={Math.min(index, 3) * 40} key={item.id}>
-                <VideoRow item={item} />
+                <VideoCard item={item} size="row" />
               </Reveal>
             ))}
           </div>
@@ -263,10 +238,10 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
     case 'news-list':
       return (
         <Reveal as="section" className="module">
-          <SectionHead onMore={() => goTo('news')} title={module.title} />
-          <div className="wire">
+          <SectionHead onMore={() => goTo('news')} title="More headlines" />
+          <div className="headline-list">
             {module.items.map((item) => (
-              <WireRow item={item} key={item.id} />
+              <Headline item={item} key={item.id} />
             ))}
           </div>
         </Reveal>
@@ -275,8 +250,8 @@ export function ModuleView({ module, goTo }: { module: FeedModule; goTo: (tab: s
     case 'episode-list':
       return (
         <Reveal as="section" className="module">
-          <SectionHead onMore={() => goTo('podcasts')} title={module.title} />
-          <div className="ep-list">
+          <SectionHead onMore={() => goTo('podcasts')} title="More to hear" />
+          <div className="episode-list">
             {module.items.map((item) => (
               <EpisodeRow item={item} key={item.id} />
             ))}

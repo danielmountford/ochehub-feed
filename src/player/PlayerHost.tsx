@@ -98,7 +98,7 @@ export function PlayerHost() {
     const by = lerp(0, bar.y, p) + away;
     const sx = lerp(1, bar.w / vw, p);
     const sy = lerp(1, bar.h / vh, p);
-    const radius = lerp(geo.fullRadius + (1 - open) * 28, 18, p);
+    const radius = lerp(geo.fullRadius + (1 - open) * 32, 22, p);
     bg.style.transform = `translate3d(${bx}px, ${by}px, 0) scale(${sx}, ${sy})`;
     bg.style.borderRadius = `${radius / sx}px / ${radius / sy}px`;
     if (bgMiniRef.current) {
@@ -118,7 +118,7 @@ export function PlayerHost() {
     const tx = lerp(slot.x + x, thumb.x, p);
     const ty = lerp(slot.y, thumb.y, p) + away;
     stage.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
-    stage.style.borderRadius = `${lerp(geo.stageRadius, 8, p) / scale}px`;
+    stage.style.borderRadius = `${lerp(geo.stageRadius, 12, p) / scale}px`;
 
     // Mini bar content rides on the card background's top-left corner.
     mini.style.opacity = String(progress(p, 0.6, 1));
@@ -463,17 +463,12 @@ export function PlayerHost() {
             <ChevronDownIcon size={22} />
           </button>
           <div className="player-top-label">
-            {kind === 'podcast' ? (
-              <span>Now playing</span>
-            ) : (
-              <>
-                <span>{kind === 'short' ? 'Shorts' : 'Videos'}</span>
-                <b>
-                  {index + 1}
-                  <i> / {queue.length}</i>
-                </b>
-              </>
-            )}
+            {kind !== 'podcast' && queue.length > 1 ? (
+              <b>
+                {index + 1}
+                <i> / {queue.length}</i>
+              </b>
+            ) : null}
           </div>
           <span />
         </header>

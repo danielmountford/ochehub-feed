@@ -1,7 +1,6 @@
 import { forwardRef } from 'react';
 import { sourceById } from '../data/catalogue';
 import type { VideoItem } from '../data/types';
-import { kindSingular } from '../lib/feed';
 import { useStore } from '../lib/store';
 import { CrossIcon, NextTrackIcon, PauseIcon, PlayIcon } from '../ui/icons';
 import { currentItem, player, playerStore } from './controller';
@@ -32,10 +31,7 @@ export const MiniBar = forwardRef<HTMLDivElement, { onDismiss: () => void }>(fun
         <span className="mini-thumb" data-mini-thumb />
         <span className="mini-text">
           <strong>{title}</strong>
-          <span>
-            {source?.short}
-            {item ? ` · ${kindSingular[item.kind]}` : ''}
-          </span>
+          <span>{source?.short}</span>
         </span>
       </button>
       <button

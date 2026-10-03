@@ -9,9 +9,48 @@ import type { FeedItem, NewsItem, PodcastItem, SocialItem, VideoItem } from './t
  * - Podcasts: titles, dates, durations and enclosures from each show's RSS feed.
  * - News: titles, links and times from the Dartsnews news sitemap. Online
  *   Darts headlines come from search results and carry no publish time.
+ * - Titles pass through `tidy()` below: this style shows no emoji and no
+ *   all-caps shouting, so "BIG EXITS ❌" is displayed as "Big exits".
  * - Social: SAMPLE posts. Social sources are not in the catalogue yet, so each
  *   post is written around a real item from that source.
  */
+
+/** Words that stay in capitals when shouted source titles are calmed down. */
+const KEEP_CAPS = new Set(['PDC', 'WGP', 'MODUS', 'US', 'BOYLE', 'TV', 'POV']);
+
+const PROPER_NOUNS: [RegExp, string][] = [
+  [/\bnew york\b/gi, 'New York'],
+  [/\bmunich\b/gi, 'Munich'],
+  [/\bpremier league\b/gi, 'Premier League'],
+  [/\binternational pairs\b/gi, 'International Pairs'],
+];
+
+/**
+ * Display clean-up for this style: no emoji, no SHOUTING, no "!!!".
+ * The snapshot keeps each source's wording; only presentation changes.
+ */
+export function tidy(text: string): string;
+export function tidy(text: string | undefined): string | undefined;
+export function tidy(text: string | undefined) {
+  if (!text) {
+    return text;
+  }
+  let out = text
+    .replace(/\d\uFE0F?\u20E3/gu, '')
+    .replace(/\u27A1\uFE0F?/gu, '→')
+    .replace(/[\u{1F1E6}-\u{1F1FF}]|[\u{E0020}-\u{E007F}]|\p{Extended_Pictographic}|\uFE0F|\u200D/gu, '')
+    .replace(/\*/g, '')
+    .replace(/([!?])\1+/g, '$1')
+    .replace(/\b[A-Z](?:['’-]?[A-Z])+\b/g, (word) => (KEEP_CAPS.has(word) ? word : word.toLowerCase()));
+  for (const [pattern, replacement] of PROPER_NOUNS) {
+    out = out.replace(pattern, replacement);
+  }
+  return out
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\s+([!?,.:])/g, '$1')
+    .trim()
+    .replace(/^([“‘"']?)([a-z])/, (_, quote: string, letter: string) => quote + letter.toUpperCase());
+}
 
 function video(
   id: string,
@@ -29,9 +68,9 @@ function video(
     kind: 'video',
     sourceId,
     youtubeId,
-    headline,
-    context,
-    title,
+    headline: tidy(headline),
+    context: tidy(context),
+    title: tidy(title),
     sortAt,
     players,
     competitions,
@@ -54,9 +93,9 @@ function short(
     kind: 'short',
     sourceId,
     youtubeId,
-    headline,
-    context,
-    title: context ? `${headline} | ${context}` : headline,
+    headline: tidy(headline),
+    context: tidy(context),
+    title: tidy(context ? `${headline} | ${context}` : headline),
     sortAt,
     players,
     competitions,
@@ -187,7 +226,7 @@ function episode(
     id,
     kind: 'podcast',
     sourceId,
-    title,
+    title: tidy(title),
     publishedAt,
     sortAt: publishedAt,
     durationSeconds,
@@ -269,7 +308,7 @@ function article(
   players: string[] = [],
   competitions: string[] = [],
 ): NewsItem {
-  return { id, kind: 'news', sourceId, title, url, publishedAt, sortAt, players, competitions };
+  return { id, kind: 'news', sourceId, title: tidy(title), url, publishedAt, sortAt, players, competitions };
 }
 
 const dn = (slug: string) => `https://dartsnews.com/pdc/${slug}`;
@@ -345,8 +384,8 @@ function post(
     sourceId,
     platform,
     handle,
-    text,
-    title: text,
+    text: tidy(text),
+    title: tidy(text),
     sortAt,
     attachId,
     players,
@@ -359,30 +398,30 @@ function post(
 /** Sample posts. Each one points at a real item from the same source. */
 export const social: SocialItem[] = [
   post('x-pdc-d4', 'pdc', 'X', '@OfficialPDC',
-    'BIG EXITS ❌ Day Four at the World Grand Prix had everything. Highlights are up now 👇',
+    'Big exits. Day Four at the World Grand Prix had everything. Highlights are up now.',
     '2026-10-02T08:10:00+01:00', 'v-wgp-d4', [], ['world-grand-prix']),
   post('x-dn-oom', 'dartsnews', 'X', '@DartsNewscom',
     'World Grand Prix shakes up the PDC Order of Merit: Gian van Veen is the provisional No. 2 ahead of Luke Humphries.',
     '2026-10-02T14:40:00+01:00', 'n-order-of-merit', ['van-veen', 'humphries'], ['world-grand-prix']),
   post('x-md-wgp', 'mission-darts', 'Instagram', '@missiondartspodcast',
-    'New episode 🎙️ Shock Name To Win The Darts World Grand Prix? Out now wherever you listen.',
+    'New episode: Shock Name To Win The Darts World Grand Prix? Out now wherever you listen.',
     '2026-10-01T17:05:00+01:00', 'p-md-wgp', [], ['world-grand-prix']),
   post('x-sky-price', 'sky-sports-darts', 'Instagram', '@skysportsdarts',
-    '“We can’t stop him” 🗣️ Gerwyn Price reacts to beating Luke Littler.',
+    '“We can’t stop him.” Gerwyn Price reacts to beating Luke Littler.',
     '2026-09-29T12:20:00+01:00', 'v-sky-price', ['price', 'littler']),
-  post('x-modus-really', 'modus-super-series', 'TikTok', '@modussuperseries', '‘REALLY?!’ 😳 #darts',
+  post('x-modus-really', 'modus-super-series', 'TikTok', '@modussuperseries', '‘Really?!’ #darts',
     '2026-09-30T18:05:00+01:00', 's-modus-really', [], ['modus-super-series']),
   post('x-wd-468', 'weekly-dartscast', 'X', '@WeeklyDartscast',
     'Episode #468 is live: Noa-Lynn van Leuven joins us, plus a World Series of Darts Finals review and a World Grand Prix preview.',
     '2026-09-25T22:10:00+01:00', 'p-wd-468', [], ['world-series', 'world-grand-prix']),
   post('x-ltd-bunting', 'love-the-darts', 'X', '@LoveTheDarts',
-    'Stephen Bunting special 🎯 The Bullet talks all about his new book. Listen now.',
+    'Stephen Bunting special: The Bullet talks all about his new book. Listen now.',
     '2026-09-25T11:45:00+01:00', 'p-ltd-bunting', ['bunting']),
   post('x-edgar-studio', 'edgar-tv-darts', 'Instagram', '@edgartvdarts',
     'I turned this office into a darts studio and coaching facility. Full tour on the channel.',
     '2026-09-24T17:10:00+01:00', 'v-edgar-studio'),
   post('x-tt-brooks', 'tops-and-tales', 'X', '@TopsAndTales',
-    'Series finale 🎙️ Bradley Brooks: “From world number 50-70 is like a different sport”.',
+    'Series finale. Bradley Brooks: “From world number 50-70 is like a different sport”.',
     '2026-08-31T07:00:00+01:00', 'p-tt-brooks'),
 ];
 

@@ -1,12 +1,11 @@
 import { type CSSProperties, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { viewer } from './data/catalogue';
 import type { VideoItem } from './data/types';
 import { focusStore, toast } from './feed/actions';
 import { QueueContext } from './feed/cards';
 import { SavedSheet, SearchOverlay, Toast } from './feed/Overlays';
 import { TuneSheet } from './feed/TuneSheet';
 import { ForYouView, NewsView, PodcastsView, ShortsView, SocialView, type TabId, tabs, VideosView } from './feed/views';
-import { itemsOfKind, libraryStore, prefsStore } from './lib/feed';
+import { defaultPrefs, itemsOfKind, libraryStore, prefsStore } from './lib/feed';
 import { useStore } from './lib/store';
 import { PlayerHost } from './player/PlayerHost';
 import { cx } from './ui/bits';
@@ -33,7 +32,8 @@ export function App() {
   const [tuneOpen, setTuneOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [savedOpen, setSavedOpen] = useState(false);
-  const [barHidden, setBarHidden] = useState(false);
+  const [ducked, setDucked] = useState(false);
+  const [solid, setSolid] = useState(false);
   const tabsRef = useRef<HTMLDivElement>(null);
 
   function goTo(next: TabId) {
@@ -45,7 +45,7 @@ export function App() {
     setTab(next);
     window.history.replaceState(null, '', `#${next}`);
     window.scrollTo(0, 0);
-    setBarHidden(false);
+    setDucked(false);
   }
 
   // Focusing on a follow (from a tag in the player) always lands on For you.
@@ -58,35 +58,34 @@ export function App() {
     return () => window.removeEventListener('feed:focus', onFocus);
   }, []);
 
-  // The brand bar ducks away on the way down and returns on the way up; the tabs always stay.
+  // The header is clear glass over the hero, gains a backdrop once content
+  // scrolls under it, and tucks its top row away on the way down.
   useEffect(() => {
     let lastY = window.scrollY;
     const onScroll = () => {
       const y = window.scrollY;
+      setSolid(y > 24);
       if (Math.abs(y - lastY) < 6) {
         return;
       }
-      setBarHidden(y > lastY && y > 120);
+      setDucked(y > lastY && y > 160);
       lastY = y;
     };
+    onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Slide the oche line under the active tab and keep that tab in view.
+  // One green dot marks the current tab and slides between them.
   useLayoutEffect(() => {
     const strip = tabsRef.current;
     const activeButton = strip?.querySelector<HTMLElement>('[aria-selected="true"]');
     if (!strip || !activeButton) {
       return;
     }
-    const place = () => {
-      strip.style.setProperty('--line-x', `${activeButton.offsetLeft}px`);
-      strip.style.setProperty('--line-w', `${activeButton.offsetWidth}px`);
-    };
+    const place = () => strip.style.setProperty('--dot-x', `${activeButton.offsetLeft + activeButton.offsetWidth / 2}px`);
     place();
-    const target = activeButton.offsetLeft - (strip.clientWidth - activeButton.offsetWidth) / 2;
-    strip.scrollTo({ left: target, behavior: 'smooth' });
+    strip.scrollTo({ left: activeButton.offsetLeft - (strip.clientWidth - activeButton.offsetWidth) / 2, behavior: 'smooth' });
     window.addEventListener('resize', place);
     document.fonts?.ready.then(place).catch(() => undefined);
     return () => window.removeEventListener('resize', place);
@@ -100,68 +99,66 @@ export function App() {
     [prefs],
   );
 
-  const tuned = prefs.strength !== 'everything';
+  const tuned = JSON.stringify(prefs) !== JSON.stringify(defaultPrefs);
+  const outside = (label: string) => toast(`${label} lives in the main OcheHub app`);
 
   return (
     <QueueContext.Provider value={queues}>
       <div className="feed-shell">
-        <header className={cx('masthead', barHidden && 'is-ducked')}>
+        <header className={cx('masthead', ducked && 'is-ducked', solid && 'is-solid')}>
           <div className="appbar">
             <a aria-label="OcheHub" className="brand" href="#for-you" onClick={() => goTo('for-you')}>
               <img alt="OcheHub" height="25" src="brand/ochehub-logo.svg" width="113" />
             </a>
             <nav aria-label="OcheHub" className="appbar-nav">
-              {appNav.map(({ id, label, Icon }) => (
+              {appNav.map(({ id, label }) => (
                 <button
                   aria-current={id === 'feed' ? 'page' : undefined}
                   className={cx(id === 'feed' && 'is-active')}
                   key={id}
-                  onClick={() => (id === 'feed' ? goTo('for-you') : toast(`${label} lives in the main OcheHub app`))}
+                  onClick={() => (id === 'feed' ? goTo('for-you') : outside(label))}
                   type="button"
                 >
-                  <Icon size={18} />
                   {label}
                 </button>
               ))}
             </nav>
             <div className="appbar-actions">
-              <button aria-label="Search" className="icon-btn is-glass" onClick={() => setSearchOpen(true)} type="button">
-                <SearchIcon size={20} />
+              <button aria-label="Search" className="icon-btn" onClick={() => setSearchOpen(true)} type="button">
+                <SearchIcon size={22} />
               </button>
-              <button aria-label={`Saved, ${savedCount} items`} className="icon-btn is-glass" onClick={() => setSavedOpen(true)} type="button">
-                <BookmarkIcon size={20} />
-                {savedCount ? <b className="badge">{savedCount}</b> : null}
+              <button aria-label={`Saved, ${savedCount} items`} className="icon-btn" onClick={() => setSavedOpen(true)} type="button">
+                <BookmarkIcon size={22} />
               </button>
-              <span aria-label={`Signed in as ${viewer.name}`} className="avatar">
-                {viewer.initials}
-              </span>
+              <button aria-label="Tune your feed" className={cx('icon-btn', tuned && 'has-dot')} onClick={() => setTuneOpen(true)} type="button">
+                <TuneIcon size={19} />
+              </button>
             </div>
           </div>
 
-          <div className="tabbar">
-            <div aria-label="Feed sections" className="tabs" ref={tabsRef} role="tablist">
-              {tabs.map((entry) => (
-                <button
-                  aria-selected={entry.id === tab}
-                  className={cx('tab', entry.id === tab && 'is-active')}
-                  key={entry.id}
-                  onClick={() => goTo(entry.id)}
-                  role="tab"
-                  type="button"
-                >
-                  {entry.label}
-                </button>
-              ))}
-              <span aria-hidden="true" className="tab-line" />
-            </div>
-            <button aria-label="Tune your feed" className={cx('tune-btn', tuned && 'is-tuned')} onClick={() => setTuneOpen(true)} type="button">
-              <TuneIcon size={17} />
-            </button>
+          <div aria-label="Feed sections" className="tabs" ref={tabsRef} role="tablist">
+            {tabs.map((entry) => (
+              <button
+                aria-selected={entry.id === tab}
+                className={cx('tab', entry.id === tab && 'is-active')}
+                key={entry.id}
+                onClick={() => goTo(entry.id)}
+                role="tab"
+                type="button"
+              >
+                {entry.label}
+              </button>
+            ))}
+            <span aria-hidden="true" className="tab-dot" />
           </div>
         </header>
 
         <main className="feed" id="feed">
-          <div className="view" key={`${tab}:${focus ? `${focus.type}-${focus.id}` : ''}`} style={{ '--dir': direction } as CSSProperties}>
+          <div
+            className={cx('view', tab === 'for-you' && !focus && 'has-hero')}
+            key={`${tab}:${focus ? `${focus.type}-${focus.id}` : ''}`}
+            style={{ '--dir': direction } as CSSProperties}
+          >
             {tab === 'for-you' ? (
               <ForYouView focus={focus} goTo={goTo} onTune={() => setTuneOpen(true)} prefs={prefs} />
             ) : tab === 'videos' ? (
@@ -179,17 +176,17 @@ export function App() {
         </main>
       </div>
 
-      <nav aria-label="OcheHub" className="bottom-nav">
+      <nav aria-label="OcheHub" className="dock">
         {appNav.map(({ id, label, Icon }) => (
           <button
             aria-current={id === 'feed' ? 'page' : undefined}
+            aria-label={label}
             className={cx(id === 'feed' && 'is-active')}
             key={id}
-            onClick={() => (id === 'feed' ? goTo('for-you') : toast(`${label} lives in the main OcheHub app`))}
+            onClick={() => (id === 'feed' ? goTo('for-you') : outside(label))}
             type="button"
           >
-            <Icon size={20} />
-            <span>{label}</span>
+            <Icon size={21} />
           </button>
         ))}
       </nav>
