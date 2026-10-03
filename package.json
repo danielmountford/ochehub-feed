@@ -1,0 +1,23 @@
+{
+  "name": "new-ochehub-feed",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone redesign of the OcheHub Feed (web, mobile-first).",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "dev": "node scripts/build.mjs --watch",
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.28.0",
+    "typescript": "^6.0.3"
+  }
+}

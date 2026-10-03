@@ -1,0 +1,167 @@
+/*
+ * OcheHub tokens. Raw values are copied from `@ochehub/tokens` and the semantic
+ * roles from `@ochehub/ui/theme`, so this prototype and the app stay in step.
+ */
+
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_400Regular.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_500Medium.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_600SemiBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_700Bold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 800;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_800ExtraBold.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 900;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_900Black.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_700Bold_Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_800ExtraBold_Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+  src: url('../fonts/BarlowSemiCondensed_900Black_Italic.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/IBMPlexMono_400Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/IBMPlexMono_600SemiBold.woff2') format('woff2');
+}
+
+:root {
+  /* Primitives: @ochehub/tokens color.* */
+  --blue-300: #7991d2;
+  --blue-400: #4d74de;
+  --blue-500: #1236a5;
+  --blue-600: #0f308a;
+  --blue-700: #0a205c;
+  --blue-800: #0b1a41;
+  --blue-900: #0f1524;
+  --blue-950: #0f121b;
+  --blue-1000: #080a12;
+  --green-500: #5dff4f;
+  --green-800: #0c711f;
+  --amber-500: #ffd166;
+  --red-500: #ff4a55;
+  --red-900: #61141f;
+  --orange-600: #c44a1b;
+  --teal-600: #0f7b66;
+  --neutral-0: #ffffff;
+  --neutral-50: #fffaf3;
+  --neutral-900: #1a1b1d;
+  --neutral-1000: #000000;
+
+  /* Semantic roles: @ochehub/ui/theme colors.* */
+  --canvas: var(--blue-900);
+  --canvas-raised: var(--blue-950);
+  --canvas-deep: var(--blue-1000);
+  --canvas-strong: var(--blue-700);
+  --accent: var(--green-500);
+  --accent-ink: #06220a;
+  --text: var(--neutral-0);
+  --text-muted: rgba(255, 255, 255, 0.65);
+  --text-faint: rgba(255, 255, 255, 0.42);
+  --surface: rgba(121, 145, 210, 0.1);
+  --surface-raised: rgba(121, 145, 210, 0.15);
+  --surface-strong: rgba(121, 145, 210, 0.3);
+  --surface-selected: rgba(121, 145, 210, 0.35);
+  --hairline: rgba(255, 255, 255, 0.08);
+  --hairline-strong: rgba(255, 255, 255, 0.16);
+  --paper: var(--neutral-50);
+  --ink: var(--neutral-900);
+
+  /* Content-type accents, all from the brand palette. */
+  --kind-video: var(--blue-300);
+  --kind-short: var(--green-500);
+  --kind-podcast: var(--amber-500);
+  --kind-news: var(--neutral-50);
+  --kind-social: #9db0e6;
+
+  /* Type */
+  --font-display: 'Barlow Semi Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Space: 8 / 12 / 16 / 24 / 32 / 48 */
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --gutter: 16px;
+
+  /* Radius: 4 / 10 / 20 / 28 / full */
+  --radius-xs: 4px;
+  --radius-sm: 10px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-full: 999px;
+
+  /* Motion: durations 160 / 220 / 320, easing emphasizedOut */
+  --fast: 160ms;
+  --normal: 220ms;
+  --slow: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.5, 0, 0.5, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
+
+  /* Layout */
+  --appbar-h: 56px;
+  --tabbar-h: 48px;
+  --nav-h: calc(62px + env(safe-area-inset-bottom, 0px));
+  --feed-max: 720px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 32px;
+    --appbar-h: 68px;
+    --nav-h: 0px;
+    --feed-max: 1200px;
+  }
+}

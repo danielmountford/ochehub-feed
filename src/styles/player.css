@@ -1,0 +1,1362 @@
+/*
+ * Player layer. Geometry (where the card, stage and mini bar sit at any moment)
+ * is driven from PlayerHost.tsx; this file owns everything else.
+ */
+
+.player {
+  --mini: 0;
+  --stage-aspect: 16 / 9;
+  --play: var(--accent);
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  contain: layout style;
+}
+
+.player.kind-short {
+  --stage-aspect: 9 / 16;
+}
+
+.player.kind-podcast {
+  --stage-aspect: 1;
+  --play: var(--amber-500);
+}
+
+.player.is-closed {
+  visibility: hidden;
+}
+
+.player-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 12, 0.72);
+  opacity: 0;
+}
+
+.player-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0e17;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.player-bg-mini {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #17296a 0%, #0f1f4d 46%, #0b1a41 100%);
+  opacity: 0;
+}
+
+.player-full {
+  --card-radius: 0px;
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  will-change: transform, opacity;
+}
+
+.player.is-full .player-full {
+  pointer-events: auto;
+}
+
+/* Colour bleeding out of the artwork behind the card. */
+.player-ambient {
+  position: absolute;
+  top: -8%;
+  left: -20%;
+  width: 140%;
+  height: 58%;
+  filter: blur(64px) saturate(1.6);
+  opacity: 0.55;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 30%, transparent 100%);
+  animation: ambient-in 900ms ease both;
+}
+
+@keyframes ambient-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.player-top {
+  position: relative;
+  z-index: 3;
+  flex: none;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
+  align-items: center;
+  height: calc(56px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 6px 0;
+  touch-action: none;
+}
+
+.player-grabber {
+  position: absolute;
+  top: calc(7px + env(safe-area-inset-top, 0px));
+  left: 50%;
+  width: 40px;
+  height: 4px;
+  margin-left: -20px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.player-top-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  padding-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.player-top-label b {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.player-top-label i {
+  font-style: normal;
+  color: var(--text-faint);
+}
+
+.player-pager {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.player-track {
+  position: absolute;
+  inset: 0;
+  will-change: transform;
+}
+
+.player-slide {
+  position: absolute;
+  inset: 0;
+  transform: translate3d(calc(var(--offset) * (100% + 16px)), 0, 0);
+}
+
+.player-arrows {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- stage */
+
+.stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100px;
+  height: 56px;
+  overflow: hidden;
+  background: #000;
+  transform-origin: 0 0;
+  will-change: transform;
+  pointer-events: auto;
+  touch-action: none;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.8);
+}
+
+.player.is-mini .stage,
+.player.is-closed .stage {
+  pointer-events: none;
+}
+
+.stage-inner {
+  position: absolute;
+  inset: 0;
+  transition: transform 620ms var(--ease-spring);
+}
+
+.stage-media {
+  position: absolute;
+  inset: 0;
+}
+
+.stage-media iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  /* Touches go to the gesture layer above, so the card can be swiped. */
+  pointer-events: none;
+}
+
+.stage-inner:has(.is-passthrough) .stage-media iframe {
+  pointer-events: auto;
+}
+
+.stage-poster {
+  position: absolute;
+  inset: 0;
+  transition: opacity 380ms ease 60ms;
+  pointer-events: none;
+}
+
+.stage-poster.is-hidden {
+  opacity: 0;
+}
+
+.stage-art {
+  position: absolute;
+  inset: 0;
+}
+
+.player.kind-podcast .stage {
+  overflow: visible;
+  background: none;
+  box-shadow: none;
+}
+
+.player.kind-podcast .stage-inner {
+  border-radius: inherit;
+  overflow: hidden;
+  background: var(--blue-800);
+  box-shadow: 0 34px 60px -22px rgba(0, 0, 0, 0.85);
+}
+
+.player.kind-podcast .stage-media {
+  display: none;
+}
+
+/* Artwork breathes out when playback is resting. */
+.player.kind-podcast.is-full[data-playing='false'] .stage-inner {
+  transform: scale(0.88);
+}
+
+/* ------------------------------------------------------- video controls */
+
+.vc {
+  position: absolute;
+  inset: 0;
+  opacity: calc(1 - var(--mini) * 5);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.vc.is-passthrough {
+  pointer-events: none;
+}
+
+.vc-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.7));
+  opacity: 0;
+  transition: opacity var(--normal) ease;
+}
+
+.vc-centre,
+.vc-mute,
+.vc-bottom {
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity var(--normal) ease,
+    transform var(--slow) var(--ease-out);
+}
+
+.vc.is-visible .vc-shade {
+  opacity: 1;
+}
+
+.vc.is-visible .vc-centre,
+.vc.is-visible .vc-mute,
+.vc.is-visible .vc-bottom {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.vc-centre {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: clamp(18px, 7vw, 44px);
+  transform: translate(-50%, -50%) scale(0.9);
+}
+
+.vc.is-visible .vc-centre {
+  transform: translate(-50%, -50%);
+}
+
+.vc-play,
+.vc-skip,
+.vc-mute {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(8, 10, 18, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  transition: transform var(--fast) ease;
+}
+
+.vc-play {
+  width: 68px;
+  height: 68px;
+}
+
+.vc-skip {
+  width: 50px;
+  height: 50px;
+}
+
+.vc-play:active,
+.vc-skip:active,
+.vc-mute:active {
+  transform: scale(0.9);
+}
+
+.vc-mute {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 42px;
+  height: 42px;
+}
+
+.vc-bottom {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+}
+
+.vc-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transition: opacity var(--normal) ease;
+}
+
+.vc.is-visible .vc-line {
+  opacity: 0;
+}
+
+.vc-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+}
+
+.vc.is-visible .vc-spinner {
+  display: none;
+}
+
+.vc-hint {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px 0 10px;
+  border-radius: 99px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  background: var(--paper);
+  pointer-events: auto;
+  animation: view-in 360ms var(--ease-out) both;
+  --dir: 0;
+}
+
+.vc-message {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 16px;
+  text-align: center;
+  background: rgba(4, 6, 12, 0.82);
+}
+
+.vc-message p {
+  max-width: 30ch;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.vc-message-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.vc-message .pill-btn {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 13.5px;
+}
+
+/* -------------------------------------------------------------- scrubber */
+
+.scrub {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.scrub-hit {
+  --ratio: 0;
+  position: relative;
+  height: 30px;
+  cursor: pointer;
+  touch-action: none;
+  outline-offset: -4px;
+}
+
+.scrub-track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.22);
+  transition:
+    height var(--fast) ease,
+    margin var(--fast) ease;
+}
+
+.scrub-fill {
+  width: 100%;
+  height: 100%;
+  background: var(--play);
+  transform: scaleX(var(--ratio));
+  transform-origin: 0 50%;
+}
+
+.scrub-thumb {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--ratio) * 100%);
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  transition: transform var(--fast) var(--ease-spring);
+}
+
+.scrub.is-dragging .scrub-thumb {
+  transform: scale(1.5);
+}
+
+.scrub.is-dragging .scrub-track {
+  height: 8px;
+  margin-top: -4px;
+}
+
+.scrub-times {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.scrub-slim .scrub-times {
+  margin-top: -6px;
+  padding-bottom: 8px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ----------------------------------------------------------- video card */
+
+.vslide {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.vslide-slot {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+
+.vslide-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  scrollbar-width: none;
+}
+
+.vslide-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.vslide-body {
+  display: grid;
+  gap: 14px;
+  padding: 16px var(--gutter) calc(28px + env(safe-area-inset-bottom, 0px));
+}
+
+.vslide-tags {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vslide-title {
+  font-size: clamp(26px, 7.6vw, 34px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  text-wrap: balance;
+}
+
+.vslide-context {
+  margin-top: -6px;
+  font-size: 16px;
+  color: var(--text-muted);
+}
+
+.vslide-source {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px 10px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.vslide-source > div {
+  display: grid;
+  min-width: 0;
+}
+
+.vslide-source strong {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.vslide-source span {
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  height: 46px;
+  padding: 0 12px;
+  border-radius: 99px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+  transition: transform var(--fast) ease;
+}
+
+.action:active {
+  transform: scale(0.96);
+}
+
+.action.save-btn.is-saved {
+  color: var(--accent);
+}
+
+.upnext {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.upnext button {
+  display: grid;
+  grid-template-columns: 116px 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 0;
+  text-align: left;
+}
+
+.upnext-thumb {
+  aspect-ratio: 16 / 9;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.upnext-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.upnext-text strong {
+  font-size: 15.5px;
+  font-weight: 700;
+  line-height: 1.14;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.upnext-text span {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+/* ---------------------------------------------------------- shorts card */
+
+.sslide {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Shorts take as much of the screen as a 9:16 frame can. */
+.sslide-slot {
+  position: relative;
+  height: min(100%, calc(100vw * 16 / 9));
+  max-width: 100%;
+  aspect-ratio: 9 / 16;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000;
+}
+
+.so {
+  position: absolute;
+  inset: 0;
+  opacity: calc(1 - var(--mini) * 5);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.so.is-passthrough {
+  pointer-events: none;
+}
+
+.so-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(8, 10, 18, 0.9) 0%, rgba(8, 10, 18, 0.35) 26%, rgba(8, 10, 18, 0) 46%);
+  pointer-events: none;
+}
+
+.so-caption {
+  position: absolute;
+  left: 16px;
+  right: 72px;
+  bottom: 20px;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.so-source {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+}
+
+.so-caption h2 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.08;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.so-caption p {
+  font-size: 13.5px;
+  color: var(--text-muted);
+}
+
+.so-rail {
+  position: absolute;
+  right: 10px;
+  bottom: 20px;
+  display: grid;
+  gap: 12px;
+}
+
+.so-action {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  min-width: 0;
+  border-radius: 50%;
+  color: #fff;
+  background: rgba(8, 10, 18, 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+span.so-action {
+  visibility: hidden;
+}
+
+.so-action.save-btn.is-saved {
+  color: var(--accent);
+}
+
+.so-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  margin: -42px 0 0 -42px;
+  border-radius: 50%;
+  background: rgba(8, 10, 18, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: none;
+  animation: flash 520ms var(--ease-out) both;
+}
+
+.so-flash.is-held {
+  animation: none;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.25);
+  }
+}
+
+.so-spinner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+}
+
+.so-hint {
+  pointer-events: none;
+}
+
+.so-error {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(4, 6, 12, 0.82);
+}
+
+.so-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+/* --------------------------------------------------------- podcast card */
+
+.pslide {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.pslide-main {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(10px, 2.2dvh, 20px);
+  width: min(100%, 520px);
+  height: 100%;
+  margin: 0 auto;
+  padding: 4px 24px calc(18px + env(safe-area-inset-bottom, 0px));
+  touch-action: none;
+}
+
+.pslide-slot {
+  --art: min(76vw, 38dvh, 340px);
+  flex: none;
+  width: var(--art);
+  aspect-ratio: 1;
+  margin: clamp(2px, 1.6dvh, 22px) auto auto;
+  border-radius: 24px;
+}
+
+.pslide-meta {
+  display: grid;
+  gap: 7px;
+  animation: meta-in 460ms var(--ease-out) both;
+}
+
+.pslide-meta.from-left {
+  --from: -26px;
+}
+
+@keyframes meta-in {
+  from {
+    opacity: 0;
+    transform: translate3d(var(--from, 26px), 0, 0);
+  }
+}
+
+.pslide-show {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--amber-500);
+}
+
+.pslide-show .follow-btn {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.pslide-meta h2 {
+  font-size: clamp(22px, 6.2vw, 28px);
+  font-weight: 800;
+  line-height: 1.06;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+
+.pslide-meta p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.pslide-desc {
+  display: none;
+}
+
+.pslide-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px 10px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14.5px;
+  background: rgba(255, 74, 85, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 74, 85, 0.4);
+}
+
+.pslide-error .pill-btn {
+  flex: none;
+  height: 38px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+
+.transport {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.transport button {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  transition:
+    transform var(--fast) ease,
+    opacity var(--fast) ease;
+}
+
+.transport button:active {
+  transform: scale(0.9);
+}
+
+.transport-step {
+  width: 48px;
+  height: 48px;
+}
+
+.transport-step:disabled {
+  opacity: 0.25;
+}
+
+.transport-skip {
+  width: 54px;
+  height: 54px;
+  color: var(--text-muted);
+}
+
+.transport-play {
+  width: 78px;
+  height: 78px;
+  color: #2b1d00;
+  background: var(--amber-500);
+  box-shadow: 0 14px 34px -10px rgba(255, 209, 102, 0.6);
+}
+
+.pslide-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pslide-actions .action {
+  width: 46px;
+  padding: 0;
+}
+
+.rate-btn {
+  min-width: 58px;
+  height: 46px;
+  padding: 0 12px;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--hairline);
+}
+
+.episodes-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  margin-left: auto;
+  padding: 0 14px;
+  border-radius: 99px;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--hairline-strong);
+}
+
+.episodes-btn b {
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 99px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 20px;
+  text-align: center;
+  color: #2b1d00;
+  background: var(--amber-500);
+}
+
+/* Episode list: rises over the lower part of the card. */
+.pslide-list {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  /* Starts below the artwork, which stays in view above it. */
+  top: calc(min(76vw, 38dvh, 340px) + clamp(2px, 1.6dvh, 22px) + 30px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  background: #141c36;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 -24px 50px rgba(0, 0, 0, 0.5);
+  transform: translate3d(0, 104%, 0);
+  visibility: hidden;
+  transition:
+    transform 480ms var(--ease-out),
+    visibility 0s linear 480ms;
+}
+
+.pslide.is-list-open .pslide-list {
+  transform: none;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.pslide-list header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px 4px 20px;
+}
+
+.pslide-list ol {
+  flex: 1;
+  min-height: 0;
+  padding: 0 12px calc(20px + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.pslide-list li button {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 8px;
+  border-radius: 14px;
+  text-align: left;
+}
+
+.pslide-list li button.is-active {
+  background: rgba(255, 209, 102, 0.12);
+}
+
+.pslide-list-num {
+  padding-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.pslide-list .is-active .pslide-list-num {
+  color: var(--amber-500);
+}
+
+.pslide-list-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pslide-list-text strong {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.16;
+}
+
+.pslide-list-text > span:not(.mini-progress) {
+  font-size: 12.5px;
+  color: var(--text-faint);
+}
+
+/* ------------------------------------------------------------ mini bar */
+
+.mini {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: calc(var(--nav-h) + 8px);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 64px;
+  padding: 0 4px 0 8px;
+  border-radius: 18px;
+  opacity: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(121, 145, 210, 0.34),
+    0 16px 36px -8px rgba(0, 0, 0, 0.7);
+  will-change: transform, opacity;
+}
+
+.player.is-mini .mini {
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mini-open {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  height: 100%;
+  text-align: left;
+}
+
+/* Empty on purpose: the live stage lands here. */
+.mini-thumb {
+  flex: none;
+  height: 48px;
+  aspect-ratio: var(--stage-aspect);
+  border-radius: 8px;
+}
+
+.mini-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.mini-text strong {
+  overflow: hidden;
+  font-size: 15.5px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-text span {
+  overflow: hidden;
+  font-size: 12.5px;
+  color: var(--text-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mini-btn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--text-muted);
+}
+
+.mini-btn.is-primary {
+  color: var(--text);
+}
+
+.mini-btn:active {
+  transform: scale(0.9);
+}
+
+.mini-next {
+  display: none;
+}
+
+.mini-line {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px;
+}
+
+.mini-line i {
+  background: var(--play);
+}
+
+/* ---------------------------------------------------------------- wider */
+
+@media (min-width: 600px) {
+  .mini {
+    left: auto;
+    right: 16px;
+    width: 420px;
+  }
+
+  .mini-next {
+    display: grid;
+  }
+}
+
+@media (min-width: 960px) {
+  .player-top {
+    height: 68px;
+    padding: 0 20px;
+  }
+
+  .player-grabber {
+    display: none;
+  }
+
+  .vslide {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+    align-content: center;
+    gap: 32px;
+    width: min(100% - 176px, 1320px);
+    margin: 0 auto;
+    padding-bottom: 56px;
+  }
+
+  .vslide-slot {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    max-height: calc(100dvh - 120px);
+  }
+
+  .vslide-scroll {
+    max-height: calc(100dvh - 150px);
+  }
+
+  .vslide-body {
+    padding: 0 4px 40px 0;
+  }
+
+  .vslide-title {
+    font-size: 36px;
+  }
+
+  .sslide-slot {
+    height: min(100% - 24px, 860px);
+  }
+
+  .player-arrows {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    right: 20px;
+    z-index: 4;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+
+  .player-arrows .icon-btn {
+    width: 52px;
+    height: 52px;
+    background: var(--surface-raised);
+    box-shadow: inset 0 0 0 1px var(--hairline-strong);
+    pointer-events: auto;
+  }
+
+  .pslide-main {
+    width: min(100% - 500px, 520px);
+    margin-left: max(24px, calc((100% - 980px) / 2));
+  }
+
+  .pslide-desc {
+    display: block;
+    margin-top: 8px;
+  }
+
+  .episodes-btn {
+    display: none;
+  }
+
+  /* On wide screens the episode list is simply always there. */
+  .pslide-list {
+    top: 8px;
+    bottom: 24px;
+    left: auto;
+    right: max(24px, calc((100% - 980px) / 2));
+    width: 400px;
+    border-radius: var(--radius-lg);
+    transform: none;
+    visibility: visible;
+  }
+
+  .pslide-list header .icon-btn {
+    display: none;
+  }
+
+  .pslide-list header {
+    padding: 18px 20px 8px;
+  }
+
+  .mini {
+    right: 24px;
+    bottom: 24px;
+    height: 76px;
+  }
+
+  .mini-thumb {
+    height: 60px;
+  }
+}
+
+/* Short screens: tighten the podcast card so every control stays on screen. */
+@media (max-height: 720px) and (max-width: 959px) {
+  .pslide-main {
+    gap: 8px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pslide-slot {
+    --art: min(60vw, 27dvh);
+    margin-top: 0;
+    border-radius: 18px;
+  }
+
+  .pslide-list {
+    top: calc(min(60vw, 27dvh) + 22px);
+  }
+
+  .pslide-meta h2 {
+    font-size: 21px;
+    -webkit-line-clamp: 2;
+  }
+
+  .transport-play {
+    width: 64px;
+    height: 64px;
+  }
+
+  .transport-skip,
+  .transport-step {
+    width: 46px;
+    height: 46px;
+  }
+
+  .pslide-actions .action,
+  .rate-btn,
+  .episodes-btn {
+    height: 42px;
+  }
+}
